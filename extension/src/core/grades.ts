@@ -3,7 +3,7 @@
  *
  * This table only reads the scholar's own words; it never judges a hadith itself.
  * Anything not listed is "unclassified" and is shown verbatim without a category.
- * The term lists need review by Saba before release (see README).
+ * Saba approved this table on 2026-10-04; a scholarly review is still due before release.
  */
 import { normalizeArabic } from "./normalize";
 

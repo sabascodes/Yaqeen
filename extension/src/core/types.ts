@@ -39,8 +39,8 @@ export type VerdictKind =
   | "weak_or_fabricated" // ضعيف أو موضوع
   | "scholars_differed" // اختلف العلماء في الحكم عليه
   | "not_found" // لم نعثر على المصدر
-  // Found in Dorar but no ruling matched the known terms: rulings shown verbatim.
-  // Pending Saba's confirmation (see README, open questions).
+  // Found in Dorar but no ruling matched the known terms: rulings shown verbatim
+  // (أحكام العلماء كما وردت في المصدر, approved by Saba 2026-10-04).
   | "rulings_verbatim";
 
 export interface Reference {

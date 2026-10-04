@@ -1,6 +1,6 @@
 """hadith.py — يبحث في الدرر السنية ويصنّف النتيجة
 (حديث ثابت / ضعيف أو موضوع / ورد بلفظ مختلف / اختلف العلماء / لم نعثر).
-قائمة ألفاظ الأحكام مطابقة لملف extension/src/core/grades.ts، وأي تعديل يكون في الموضعين."""
+قائمة ألفاظ الأحكام مطابقة لملف extension/src/core/grades.ts (اعتمدتها صبا)، وأي تعديل يكون في الموضعين."""
 import re
 from urllib.parse import quote
 import requests
