@@ -1,5 +1,7 @@
 # يقين (Yaqeen)
 
+> **الإضافة:** إضافة المتصفح (Chrome وEdge) لفحص منشورات X وFacebook وTikTok موجودة في مجلد [`extension/`](extension/README.md)، وتعمل على الجهاز دون الحاجة لتشغيل الخدمة أدناه.
+
 ```
 yaqeen/
 ├── web/          الواجهات (index.html الصفحة الرئيسية، popup.html نافذة الإضافة)

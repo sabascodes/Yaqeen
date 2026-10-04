@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Yaqeen</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&family=Inter:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="ui.css">
+<style>
+  body { margin:0; background:var(--bg); width:400px }
+  .popup { padding:16px; display:flex; flex-direction:column; gap:12px }
+  .popup__head { display:flex; justify-content:space-between; align-items:center }
+  .logo { display:inline-flex; align-items:center; gap:10px; font-weight:700; font-size:20px; color:var(--brand) }
+  .logo__mark { width:32px; height:32px; border-radius:10px; background:var(--brand); display:grid; place-items:center }
+  .row { display:flex; gap:8px }
+  textarea { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font:inherit; resize:vertical; min-height:60px }
+  .foot { font-size:12px; color:var(--muted); text-align:center }
+  a.settings { color:var(--brand); font-size:12px }
+</style>
+</head>
+<body>
+<main class="yq popup" id="app">
+  <div class="popup__head">
+    <span class="logo"><span class="logo__mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.8 12.2l2.2 2.2 4.4-4.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span id="logo"></span></span>
+    <a class="settings" href="options.html" target="_blank" id="settings"></a>
+  </div>
+  <p id="nodata" class="note" hidden></p>
+  <form class="row" id="form"><textarea id="q"></textarea><button class="btn btn--primary" id="go" type="submit"></button></form>
+  <div id="out" aria-live="polite"></div>
+  <p class="foot" id="foot"></p>
+</main>
+<script src="popup.js" type="module"></script>
+</body>
+</html>
