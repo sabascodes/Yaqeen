@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>يقين | Yaqeen</title>
+<meta name="description" content="Yaqeen — AI browser extension that verifies Islamic content against approved sources.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="container nav__in">
+    <a class="logo" href="#top" aria-label="Yaqeen">
+      <span class="logo__mark" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.8 12.2l2.2 2.2 4.4-4.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </span>
+      <span data-i18n="logo"></span>
+    </a>
+    <nav class="nav__links" aria-label="Main">
+      <a href="#how" data-i18n="nav1"></a>
+      <a href="#types" data-i18n="nav2"></a>
+      <a href="#principles" data-i18n="nav3"></a>
+    </nav>
+    <div class="nav__end">
+      <button class="lang-toggle" id="langBtn" type="button"></button>
+      <a class="btn btn--primary" href="#install" data-i18n="cta"></a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <section class="hero">
+    <div class="container hero__in">
+      <div>
+        <h1 data-i18n="h"></h1>
+        <p data-i18n="sub"></p>
+        <div class="hero__cta">
+          <a class="btn btn--gold btn--lg" href="#install" data-i18n="cta"></a>
+          <a class="btn btn--secondary btn--lg" href="#how" data-i18n="learn"></a>
+        </div>
+        <p class="hero__trust" data-i18n="trust"></p>
+      </div>
+      <div class="hero__visual" id="heroCard"></div>
+    </div>
+  </section>
+
+  <section class="section" id="how">
+    <div class="container">
+      <h2 data-i18n="stT"></h2><p class="section__sub" data-i18n="stS"></p>
+      <ol class="grid grid--4" style="list-style:none;padding:0" id="steps"></ol>
+    </div>
+  </section>
+
+  <section class="section section--white" id="types">
+    <div class="container">
+      <h2 data-i18n="clT"></h2><p class="section__sub" data-i18n="clS"></p>
+      <div class="grid grid--5" id="classes"></div>
+      <div class="demo" id="demoCards" aria-label="Examples"></div>
+    </div>
+  </section>
+
+  <section class="section section--tint" id="principles">
+    <div class="container">
+      <h2 data-i18n="prT"></h2>
+      <div class="grid grid--3" id="principles-grid"></div>
+    </div>
+  </section>
+
+  <section class="cta" id="install">
+    <div class="container">
+      <h2 data-i18n="ctaT"></h2>
+      <a class="btn btn--gold btn--lg" href="#" data-i18n="cta"></a>
+    </div>
+  </section>
+</main>
+
+<footer class="footer"><div class="container" data-i18n="foot"></div></footer>
+
+<script src="cards.js"></script>
+<script>
+const I18N = {
+  ar: {
+    logo:'يقين', nav1:'كيف يعمل', nav2:'التصنيفات', nav3:'مبادئنا', cta:'أضف إلى المتصفح', learn:'كيف يعمل؟', toggle:'English',
+    h:'تحقّق من المحتوى الإسلامي قبل أن تشاركه',
+    sub:'يقين إضافة متصفح بالذكاء الاصطناعي تطابق النصوص الدينية على منصات التواصل مع المصادر الإسلامية المعتمدة، وتعرض لك التصنيف والمرجع في لحظتها.',
+    trust:'مصادر معتمدة فقط · بلا فتاوى · عربي وإنجليزي',
+    stT:'كيف يعمل يقين؟', stS:'من المنشور إلى الحكم الموثّق، أثناء تصفحك.',
+    steps:[['اكتشاف النص','يرصد يقين النصوص الدينية داخل المنشورات أثناء تصفحك.'],['استخراج من الصور','يستخرج النصوص من الصور بتقنية OCR ليحلّلها كما يحلّل النص.'],['مطابقة دلالية','يحوّل النص إلى تمثيل دلالي ويطابقه بقاعدة المصادر المعتمدة (RAG).'],['نتيجة موثّقة','يعرض التصنيف مع المرجع واسم العالم المصحّح، دون فتوى من عنده.']],
+    clT:'خمسة تصنيفات واضحة', clS:'كل نتيجة مقرونة بمصدرها ومرجعها.',
+    cl:{quran:'النص مطابق لآية في المصحف، مع اسم السورة ورقم الآية.',hadith:'حديث ثابت، مع اسم من صححه من العلماء والمرجع.',wording:'النص قريب لكن لفظه مختلف، ونعرض لك اللفظ الصحيح لتشاركه.',weak:'حكم العلماء بضعفه أو وضعه، مع ذكر المرجع.',notfound:'لم نجده في المصادر المعتمدة لدينا، ولا نخمّن.'},
+    prT:'مبادئنا',
+    pr:[['مصادر معتمدة فقط','لا يخرج يقين عن قاعدة المصادر المعتمدة، ولا يبحث في أي مكان آخر.'],['لا فتاوى من عندنا','ننقل حكم العلماء مع مرجعه كما ورد، ولا نصدر حكمًا من عندنا.'],['لا تخمين','إن لم نجد المصدر قلنا لك «لم نعثر على المصدر»، ولا نقرّب النتيجة.']],
+    ctaT:'تحقّق قبل أن تشارك',
+    foot:'يقين · مشروع لتحدي الذكاء الاصطناعي في خدمة المحتوى الإسلامي · مسار أدوات المعرفة والتحقق'
+  },
+  en: {
+    logo:'Yaqeen', nav1:'How it works', nav2:'Classifications', nav3:'Principles', cta:'Add to browser', learn:'How it works', toggle:'العربية',
+    h:'Verify Islamic content before you share it',
+    sub:'Yaqeen is an AI browser extension that matches religious text on social media against approved Islamic sources and shows you the classification and reference right where you browse.',
+    trust:'Approved sources only · No rulings issued · Arabic & English',
+    stT:'How Yaqeen works', stS:'From post to documented ruling, while you browse.',
+    steps:[['Detect the text','Yaqeen spots religious text inside posts as you browse.'],['Read images','It extracts text from images with OCR and analyzes it like any other text.'],['Semantic matching','The text becomes a semantic representation, matched against approved sources (RAG).'],['Documented result','It shows the classification with the reference and the scholar who graded it, never its own ruling.']],
+    clT:'Five clear classifications', clS:'Every result comes with its source and reference.',
+    cl:{quran:'The text matches a Quran verse, with surah name and verse number.',hadith:'An authenticated hadith, with the scholar who graded it and the reference.',wording:'Close, but the wording differs. We show the correct wording to share.',weak:'Scholars ruled it weak or fabricated, with the reference cited.',notfound:'Not in our approved sources. We never guess.'},
+    prT:'Our principles',
+    pr:[['Approved sources only','Yaqeen never goes beyond its approved sources database and never searches elsewhere.'],['No rulings of our own','We relay scholars’ rulings with their references exactly as cited. We issue no rulings.'],['No guessing','If we can’t find the source, we say “Source not found” instead of approximating.']],
+    ctaT:'Verify before you share',
+    foot:'Yaqeen · Built for the AI Challenge Serving Islamic Content · Knowledge & Verification Tools track'
+  }
+};
+
+function setLang(lang){
+  const d = I18N[lang], root = document.documentElement;
+  root.lang = lang; root.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  document.title = lang === 'ar' ? 'يقين | Yaqeen' : 'Yaqeen | يقين';
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = d[el.dataset.i18n]; });
+  document.getElementById('langBtn').textContent = d.toggle;
+  document.getElementById('steps').innerHTML = d.steps.map((s,i) =>
+    `<li class="tile"><span class="step-num">${i+1}</span><h3>${YQ.esc(s[0])}</h3><p>${YQ.esc(s[1])}</p></li>`).join('');
+  document.getElementById('classes').innerHTML = YQ.types.map(t =>
+    `<div class="tile tile--class" data-type="${t}"><span class="badge"><i class="dot"></i>${YQ.esc(YQ.text[lang].lbl[t])}</span><p>${YQ.esc(d.cl[t])}</p></div>`).join('');
+  document.getElementById('principles-grid').innerHTML = d.pr.map(p =>
+    `<div class="tile tile--principle"><h3>${YQ.esc(p[0])}</h3><p>${YQ.esc(p[1])}</p></div>`).join('');
+  document.getElementById('heroCard').innerHTML = YQ.card(YQ.sample(lang === 'ar' ? 'weak' : 'wording', lang), lang);
+  document.getElementById('demoCards').innerHTML = YQ.types.map(t => YQ.card(YQ.sample(t, lang), lang)).join('');
+  localStorage.setItem('yaqeen-lang', lang);
+}
+YQ.types = ['quran','hadith','wording','weak','notfound'];
+document.getElementById('langBtn').addEventListener('click', () => setLang(document.documentElement.lang === 'ar' ? 'en' : 'ar'));
+setLang(localStorage.getItem('yaqeen-lang') || 'ar');
+</script>
+</body>
+</html>
