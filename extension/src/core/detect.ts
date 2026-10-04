@@ -94,7 +94,8 @@ export function extractFragments(postText: string): Fragment[] {
   const postQuran = hasAny(text, QURAN_MARKERS) || text.includes("﴿");
 
   const pieces = new Set<string>();
-  for (const q of quoted(text)) pieces.add(q);
+  const quotes = new Set(quoted(text));
+  for (const q of quotes) pieces.add(q);
   // Paragraphs, then the whole post (a quote can span several lines).
   for (const p of text.split(/\n+/)) pieces.add(p);
   pieces.add(text);
@@ -108,7 +109,9 @@ export function extractFragments(postText: string): Fragment[] {
     seen.add(key);
     out.push({
       text: piece.trim(),
-      hadithLike: postHadith,
+      // Only quotes and pieces that carry a hadith marker themselves may go to an online lookup,
+      // so unrelated lines of the post (greetings, hashtags) never leave the device.
+      hadithLike: postHadith && (quotes.has(piece) || hasAny(piece, HADITH_MARKERS)),
       quranLike: postQuran || piece.includes("﴿"),
     });
   }

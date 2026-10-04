@@ -36,13 +36,13 @@ const P = {
     steps:[['اكتشاف النص الديني','done'],['استخراج النص من الصورة (OCR)','done'],['المطابقة مع المصادر المعتمدة','active'],['إعداد النتيجة','pending']],
     errBadge:'تعذّر إكمال التحقق', errT:'تعذّر الاتصال بقاعدة المصادر', errP:'تحقق من اتصالك بالإنترنت ثم أعد المحاولة. لن نعرض أي نتيجة دون مصدر معتمد.', retry:'إعادة المحاولة',
     needBadge:'نحتاج توضيحًا', needT:'النص قصير جدًا للمطابقة بثقة', needP:'حدّد النص كاملًا من المنشور أو الصقه هنا، وسنطابقه مع المصادر المعتمدة.', ph:'الصق النص هنا…', verify:'تحقق الآن', select:'تحديد من الصفحة',
-    ph2:'اكتب نصًا للتحقق منه…', check:'تحقق', dispBadge:'اختلف المحدثون', dispT:'اختلاف في الحكم', tabs:{result:'النتيجة',loading:'التحميل',error:'الخطأ',needs:'يحتاج توضيحًا'} },
+    ph2:'اكتب نصًا للتحقق منه…', check:'تحقق', tabs:{result:'النتيجة',loading:'التحميل',error:'الخطأ',needs:'يحتاج توضيحًا'} },
   en: { logo:'Yaqeen', toggle:'العربية', foot:'Approved sources only · No rulings issued',
     sum:{result:'2 religious texts detected on this page',loading:'Verifying content…',error:'',needs:'',custom:''},
     steps:[['Detecting religious text','done'],['Extracting text from image (OCR)','done'],['Matching approved sources','active'],['Preparing result','pending']],
     errBadge:'Verification failed', errT:'Couldn’t reach the sources database', errP:'Check your connection and try again. We never show a result without an approved source.', retry:'Try again',
     needBadge:'Needs your input', needT:'The text is too short to match confidently', needP:'Select the full text from the post or paste it here and we’ll match it against approved sources.', ph:'Paste the text here…', verify:'Verify now', select:'Select on page',
-    ph2:'Type a text to verify…', check:'Verify', dispBadge:'Scholars differ', dispT:'Differing rulings', tabs:{result:'Result',loading:'Loading',error:'Error',needs:'Needs input'} }
+    ph2:'Type a text to verify…', check:'Verify', tabs:{result:'Result',loading:'Loading',error:'Error',needs:'Needs input'} }
 };
 const API_URL = 'http://127.0.0.1:8000/verify';   // عنوان الخدمة (الباك-إند)
 let customHTML = '';
@@ -85,11 +85,7 @@ async function verify(text){
     const data = await r.json();
     if (data.status === 'ok') { customHTML = YQ.card(data.card, lang); state = 'custom'; }
     else if (data.status === 'needs_input') { state = 'needs'; }
-    else if (data.status === 'disputed') {
-      const p = P[lang];
-      customHTML = `<div class="panel" data-type="wording"><span class="badge"><i class="dot"></i>${e(p.dispBadge)}</span><h3>${e(p.dispT)}</h3><p>${e(data.ruling)}</p></div>`;
-      state = 'custom';
-    } else { state = 'error'; }
+    else { state = 'error'; }
   } catch (err) { state = 'error'; }
   render();
 }

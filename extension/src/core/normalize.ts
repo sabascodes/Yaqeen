@@ -13,6 +13,11 @@ const NON_ARABIC = /[^ء-ي\s]/g;
 export function normalizeArabic(input: string): string {
   return input
     .replace(/ﷺ/g, " صلى الله عليه وسلم ") // ﷺ ligature
+    // Uthmani spellings that everyday writing spells with other letters:
+    // A bare waw carrying a superscript alef is read as alef (ٱلصَّلَوٰة → الصلاة, ٱلزَّكَوٰة → الزكاة);
+    // a waw with its own vowel is a real waw (ٱلسَّمَٰوَٰتِ → السماوات).
+    .replace(/\u0648\u0670/g, "ا")
+    .replace(/\u06E7/g, "ي") // small high yeh: إِبۡرَٰهِـۧمَ → إبراهيم
     .replace(DIACRITICS, "")
     .replace(TATWEEL, "")
     .replace(ALEF_FORMS, "ا")

@@ -16,9 +16,11 @@ import { suraName } from "./suras";
 
 /** Similarity thresholds; to be calibrated on the evaluation set in eval/. */
 export const THRESHOLDS = {
-  quranExact: 0.93,
+  /** Below this a quote differs by at least a word, so it is shown with the correct wording. */
+  quranExact: 0.97,
   quranClose: 0.75,
-  hadithExact: 0.9,
+  /** Hadith sources are in everyday spelling, so an exact quote matches letter for letter. */
+  hadithExact: 0.99,
   hadithClose: 0.72,
   /** A Dorar result counts as the same hadith above this. */
   dorarSame: 0.65,
@@ -159,6 +161,7 @@ export async function checkPost(text: string, deps: CheckDeps, manual = false): 
   const verdicts: Verdict[] = [];
   const covered: string[] = [];
   let incomplete = false;
+  const asked: string[] = []; // fragments already sent online
 
   // Smaller fragments (quotes, lines) first, so the whole post is only checked for what is left.
   fragments.sort((a, b) => a.text.length - b.text.length);
@@ -170,7 +173,9 @@ export async function checkPost(text: string, deps: CheckDeps, manual = false): 
 
     let v = await checkQuran(f, deps);
     if (!v) v = checkHadeethEnc(f, deps);
-    if (!v && f.hadithLike) {
+    // A larger fragment that contains one already sent would only repeat the same lookup.
+    if (!v && f.hadithLike && !asked.some((a) => sk.includes(a))) {
+      asked.push(sk);
       v = await checkDorar(f, deps).catch(() => {
         incomplete = true;
         return null;

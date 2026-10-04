@@ -17,6 +17,10 @@ describe("normalization", () => {
   it("makes Uthmani and everyday spelling comparable", () => {
     expect(skeleton("يَٰٓأَيُّهَا ٱلَّذِينَ ءَامَنُواْ")).toBe(skeleton("يا أيها الذين آمنوا"));
     expect(skeleton("ٱلۡكِتَٰبُ")).toBe(skeleton("الكتاب"));
+    expect(skeleton("بِٱلصَّبۡرِ وَٱلصَّلَوٰةِ")).toBe(skeleton("بالصبر والصلاة"));
+    expect(skeleton("إِبۡرَٰهِـۧمَ")).toBe(skeleton("إبراهيم"));
+    expect(skeleton("ٱلسَّمَٰوَٰتِ")).toBe(skeleton("السماوات"));
+    expect(skeleton("ٱلۡحَيَوٰةِ")).toBe(skeleton("الحياة"));
     expect(normalizeArabic("ﷺ")).toBe("صلي الله عليه وسلم");
   });
 });
@@ -75,6 +79,11 @@ describe("Quran matching", () => {
 });
 
 describe("hadith", () => {
+  it("treats a one-word change as different wording", async () => {
+    const r = await checkPost("قال رسول الله ﷺ: إنما الأعمال بالنية وإنما لكل امرئ ما نوى", deps());
+    expect(r.verdicts[0]!.kind).toBe("different_wording");
+  });
+
   it("matches an authentic hadith from HadeethEnc locally", async () => {
     const dorar = vi.fn();
     const r = await checkPost("قال رسول الله ﷺ: إنما الأعمال بالنيات وإنما لكل امرئ ما نوى", deps({ dorar }));
@@ -89,20 +98,21 @@ describe("hadith", () => {
     expect(r.verdicts[0]!.wordingDiffers).toBe(true);
   });
 
+  // Scholar and book names in these Dorar fixtures are placeholders, not real references.
   const weak = "اطلبوا العلم ولو بالصين فإن طلب العلم فريضة على كل مسلم";
   it("reports a weak or fabricated hadith with the scholar and reference", async () => {
     const dorar = vi.fn(async () =>
       parseDorarHtml(
         dorarHtml([
-          { text: weak, scholar: "ابن الجوزي", book: "الموضوعات", num: "1/347", ruling: "[موضوع]" },
-          { text: weak, scholar: "الألباني", book: "السلسلة الضعيفة", num: "416", ruling: "باطل" },
+          { text: weak, scholar: "العالم أ", book: "كتاب أ", num: "1", ruling: "[موضوع]" },
+          { text: weak, scholar: "العالم ب", book: "كتاب ب", num: "2", ruling: "باطل" },
         ]),
       ),
     );
     const r = await checkPost(`قال رسول الله صلى الله عليه وسلم: ${weak}`, deps({ dorar }));
     expect(r.verdicts[0]!.kind).toBe("weak_or_fabricated");
     expect(r.verdicts[0]!.rulings).toHaveLength(2);
-    expect(r.verdicts[0]!.rulings?.[0]).toMatchObject({ scholar: "ابن الجوزي", book: "الموضوعات" });
+    expect(r.verdicts[0]!.rulings?.[0]).toMatchObject({ scholar: "العالم أ", book: "كتاب أ" });
     // Only the hadith text leaves the device, without the "قال رسول الله" framing.
     expect(dorar).toHaveBeenCalledWith(weak);
   });
@@ -227,5 +237,14 @@ describe("source errors", () => {
     const r = await checkPost("قال رسول الله ﷺ: نص لم نتمكن من التحقق منه بسبب انقطاع الاتصال", deps({ dorar }));
     expect(r.verdicts).toHaveLength(0);
     expect(r.incomplete).toBe(true);
+  });
+});
+
+describe("online lookups", () => {
+  it("only sends the hadith part of a multi-line post", async () => {
+    const dorar = vi.fn(async () => []);
+    await checkPost("صباح الخير لكل المتابعين الكرام في هذا اليوم\nقال رسول الله ﷺ: نص حديث للتجربة غير موجود محليا", deps({ dorar }));
+    expect(dorar).toHaveBeenCalledTimes(1);
+    expect(dorar).toHaveBeenCalledWith("نص حديث للتجربة غير موجود محليا");
   });
 });
