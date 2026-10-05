@@ -37,7 +37,9 @@ function getEmbedder(): Promise<FeatureExtractionPipeline> {
 async function ocr(dataUrl: string): Promise<string> {
   const worker = await getOcr();
   const { data } = await worker.recognize(dataUrl);
-  return data.text;
+  // Lines in an image are usually one sentence wrapped to fit: check them as one text, so a
+  // wrapped half of a hadith is not matched on its own against an unrelated verse.
+  return data.text.replace(/\s*\n\s*/g, " ").trim();
 }
 
 /** Unit-length embedding of the post text, comparable with the precomputed ayah embeddings. */
