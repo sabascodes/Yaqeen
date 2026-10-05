@@ -32,8 +32,9 @@ const TEXT = {
     sources: "المصادر: موسوعة القرآن الكريم quranenc.com · موسوعة الأحاديث النبوية hadeethenc.com · الدرر السنية dorar.net",
     demoNote: "نسخة العرض لا تشمل المطابقة بالمعنى، وهي متاحة في الإضافة.",
     other: "English",
-    tabs: { try: "جرّب بنفسك", post: "على منشور", popup: "النافذة المنبثقة", settings: "الإعدادات", types: "أنواع النتائج" },
-    postNote: "هكذا تظهر يقين تحت منشور على X: اضغط زر يقين لعرض النتيجة.",
+    tabs: { try: "جرّب بنفسك", post: "على منشور", popup: "النافذة المنبثقة", settings: "الإعدادات" },
+    postNote: "صورة توضيحية لمنشور على X كما يظهر في الهاتف. الزر الوحيد الذي يعمل هو زر يقين تحت المنشور.",
+    postBar: "منشور",
     popupNote: "هذه النافذة تفتح من أيقونة يقين في شريط المتصفح.",
     popupLabel: "الصق آية أو حديثًا للتحقق منه",
     popupFoot: "نعتمد على المصادر المعتمدة فقط · لا نصدر فتاوى",
@@ -49,7 +50,7 @@ const TEXT = {
     dorarHint: "يُرسل نص الحديث المستخرج فقط إلى dorar.net",
     semOpt: "المطابقة بالمعنى على الجهاز",
     semHint: "يُنزّل نموذج لغوي مرة واحدة، حوالي 280 ميجابايت",
-    typesNote: "كل نتيجة تحمل واحدًا من هذه التصنيفات، بلونه.",
+    typesTitle: "النتائج التي قد تظهر لك",
     meanings: {
       quran_exact: "الآية مطابقة حرفيًا لنص المصحف، مع اسم السورة ورقم الآية.",
       hadith_authentic: "وُجد لفظ الحديث مطابقًا في المصدر، مع الحكم والمرجع.",
@@ -79,8 +80,9 @@ const TEXT = {
     sources: "Sources: QuranEnc quranenc.com · HadeethEnc hadeethenc.com · Dorar dorar.net",
     demoNote: "This demo leaves out meaning-based matching, which is in the extension.",
     other: "العربية",
-    tabs: { try: "Try it", post: "On a post", popup: "Popup", settings: "Settings", types: "Result types" },
-    postNote: "This is how Yaqeen appears under a post on X: press the Yaqeen button to see the result.",
+    tabs: { try: "Try it", post: "On a post", popup: "Popup", settings: "Settings" },
+    postNote: "An illustration of a post on X as it appears on a phone. The only working button is the Yaqeen button under the post.",
+    postBar: "Post",
     popupNote: "This window opens from the Yaqeen icon in the browser toolbar.",
     popupLabel: "Paste an ayah or hadith to verify",
     popupFoot: "Approved sources only · No rulings issued",
@@ -96,7 +98,7 @@ const TEXT = {
     dorarHint: "Only the extracted hadith text is sent to dorar.net",
     semOpt: "Meaning-based matching on the device",
     semHint: "Downloads a language model once, about 280 MB",
-    typesNote: "Every result carries one of these labels, in its colour.",
+    typesTitle: "The results you may see",
     meanings: {
       quran_exact: "The verse matches the Mushaf text word for word, with surah and ayah.",
       hadith_authentic: "The hadith wording was found exactly in the source, with its grading and reference.",
@@ -126,9 +128,9 @@ let lang: Lang = (() => {
   return navigator.language.toLowerCase().startsWith("ar") ? "ar" : "en";
 })();
 
-type View = "try" | "post" | "popup" | "settings" | "types";
+type View = "try" | "post" | "popup" | "settings";
 const viewFromHash = (): View =>
-  (["try", "post", "popup", "settings", "types"] as const).find((v) => v === location.hash.slice(1)) ?? "try";
+  (["try", "post", "popup", "settings"] as const).find((v) => v === location.hash.slice(1)) ?? "try";
 let view: View = viewFromHash();
 addEventListener("hashchange", () => {
   if (viewFromHash() === view) return;
@@ -174,13 +176,16 @@ function render() {
   document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   const app = document.getElementById("app")!;
   app.setAttribute("lang", lang);
-  const tabs = (Object.keys(x.tabs) as View[])
+  const tabs = (["try", "post", "popup"] as const)
     .map((v) => `<a class="tab" href="#${v}" data-view="${v}" ${v === view ? 'aria-current="page"' : ""}>${esc(x.tabs[v])}</a>`)
     .join("");
   app.innerHTML = `
     <header class="topbar"><div class="wrap">
       <span class="logo">${markSvg(40)}${esc(x.title)}</span>
-      <button class="btn btn--secondary" id="lang">${esc(x.other)}</button>
+      <div class="topbar__actions">
+        <a class="btn btn--secondary" href="#settings" data-view="settings" ${view === "settings" ? 'aria-current="page"' : ""}>${GEAR}${esc(x.tabs.settings)}</a>
+        <button class="btn btn--secondary" id="lang">${esc(x.other)}</button>
+      </div>
     </div></header>
     <section class="hero"><div class="wrap">
       <div class="hero__text">
@@ -237,17 +242,32 @@ function render() {
   if (view === "post") document.querySelector<HTMLButtonElement>(".post .yq-chip")?.click();
 }
 
+const GEAR = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`;
+
+/** Reply, repost, like and share, drawn as thin grey outlines so they read as part of the picture. */
+const ICONS = [
+  "M21 12a8 8 0 0 1-11.6 7.1L4 21l1.9-5.4A8 8 0 1 1 21 12z",
+  "M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 0 0 1-3 3H3",
+  "M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z",
+  "M4 12v8h16v-8M16 6l-4-4-4 4M12 2v14",
+].map((d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="${d}"/></svg>`).join("");
+
 function viewHtml(x: (typeof TEXT)[Lang]): string {
   switch (view) {
     case "post":
-      return `<p class="muted">${esc(x.postNote)}</p>
-        <article class="post post--x" data-i="1">
-          <div class="post__user"><span class="avatar">${esc(SAMPLES[1]!.user[0])}</span><span class="who"><b>${esc(SAMPLES[1]!.user)}</b><span class="muted">@sara · 2h</span></span></div>
-          <p class="post__text" dir="auto">${esc(SAMPLES[1]!.text)}</p>
-          <div class="post__yq"><button class="yq-chip post__check">${CHIP_MARK}${esc(t(lang).yaqeen)}</button><div class="post__badges"></div></div>
-          <div class="post__cards"></div>
-          <div class="post__actions muted"><span>💬</span><span>🔁</span><span>♡</span><span>↗</span></div>
-        </article>`;
+      return `<p class="muted center">${esc(x.postNote)}</p>
+        <div class="phone" aria-label="${esc(x.postNote)}">
+          <div class="phone__status" aria-hidden="true"><span>9:41</span><span class="phone__notch"></span><span>●●● ▮</span></div>
+          <div class="phone__bar" aria-hidden="true"><span>‹</span><b>${esc(x.postBar)}</b><span></span></div>
+          <article class="post post--x" data-i="1">
+            <div class="post__user"><span class="avatar">${esc(SAMPLES[1]!.user[0])}</span><span class="who"><b>${esc(SAMPLES[1]!.user)}</b><span class="muted">@sara · 2h</span></span></div>
+            <p class="post__text" dir="auto">${esc(SAMPLES[1]!.text)}</p>
+            <div class="post__yq"><button class="yq-chip post__check">${CHIP_MARK}${esc(t(lang).yaqeen)}</button><div class="post__badges"></div></div>
+            <div class="post__cards"></div>
+            <div class="post__actions" aria-hidden="true">${ICONS}</div>
+          </article>
+          <div class="phone__home" aria-hidden="true"></div>
+        </div>`;
     case "popup":
       return `<p class="muted">${esc(x.popupNote)}</p>
         <div class="browser">
@@ -275,11 +295,6 @@ function viewHtml(x: (typeof TEXT)[Lang]): string {
           </section>
         </div>`;
     }
-    case "types":
-      return `<p class="muted">${esc(x.typesNote)}</p>
-        <div class="types">${KIND_ORDER.map(
-          (k) => `<div class="type card" data-type="${TYPE[k]}"><span class="badge" data-type="${TYPE[k]}"><i class="dot"></i>${esc(t(lang).kinds[k])}</span><p>${esc(x.meanings[k])}</p></div>`,
-        ).join("")}</div>`;
     default:
       return `<div class="grid">
         <section class="panel">
@@ -290,6 +305,12 @@ function viewHtml(x: (typeof TEXT)[Lang]): string {
             <button class="btn btn--primary" type="submit">${esc(x.go)}</button>
           </form>
           <div id="out" aria-live="polite"></div>
+          <div class="legend">
+            <h3>${esc(x.typesTitle)}</h3>
+            <ul>${KIND_ORDER.map(
+              (k) => `<li><span class="badge" data-type="${TYPE[k]}"><i class="dot"></i>${esc(t(lang).kinds[k])}</span><span class="muted">${esc(x.meanings[k])}</span></li>`,
+            ).join("")}</ul>
+          </div>
         </section>
         <div class="col">
           <h2>${esc(x.feed)}</h2>

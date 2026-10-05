@@ -54,7 +54,23 @@
   #status { margin-top:16px }
   .post--x { max-width:600px; width:100%; margin-inline:auto; border-color:#E1E8ED }
   .who { display:flex; flex-direction:column; line-height:1.3 }
-  .post__actions { display:flex; justify-content:space-between; border-top:1px solid #EFF3F4; padding-top:8px }
+  .post__actions { display:flex; justify-content:space-between; border-top:1px solid #EFF3F4; padding:8px 8px 0; color:#AAB8C2; pointer-events:none; user-select:none }
+  .topbar__actions { display:flex; gap:8px; align-items:center }
+  .topbar__actions .btn { display:inline-flex; align-items:center; gap:6px; text-decoration:none }
+  .topbar__actions a[aria-current] { border-color:var(--brand); color:var(--brand) }
+  .center { text-align:center }
+  .phone { width:100%; max-width:380px; margin:8px auto 0; border:10px solid #1B1F23; border-radius:44px; background:#fff; overflow:hidden; box-shadow:0 12px 40px rgba(15,91,74,.18) }
+  .phone__status { display:flex; justify-content:space-between; align-items:center; padding:8px 20px 4px; font-size:12px; font-weight:700; direction:ltr; color:#0F1419 }
+  .phone__notch { width:90px; height:22px; background:#1B1F23; border-radius:0 0 14px 14px; margin-top:-8px }
+  .phone__bar { display:grid; grid-template-columns:24px 1fr 24px; align-items:center; text-align:center; padding:8px 14px; border-bottom:1px solid #EFF3F4; font-size:15px }
+  .phone .post--x { border:0; border-radius:0; max-width:none; min-height:420px }
+  .phone .post--x .card { max-width:none }
+  .phone__home { width:120px; height:5px; border-radius:3px; background:#1B1F23; margin:10px auto 8px }
+  .legend { border-top:1px solid var(--border); padding-top:16px; margin-top:4px }
+  .legend h3 { margin:0 0 10px; font-size:15px }
+  .legend ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px }
+  .legend li { display:flex; flex-direction:column; gap:4px; font-size:13px; line-height:1.7 }
+  .legend .badge { align-self:flex-start }
   .post--x .card { max-width:440px }
   .browser { display:flex; flex-direction:column; max-width:760px; width:100%; margin-inline:auto; border:1px solid var(--border); border-radius:16px; overflow:hidden; background:#EEF1F3 }
   .browser__bar { display:flex; align-items:center; gap:12px; padding:10px 14px; background:var(--surface); border-bottom:1px solid var(--border) }
