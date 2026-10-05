@@ -1,30 +1,32 @@
 /**
- * Offscreen document: on-device OCR (Tesseract, Arabic) and the
+ * Offscreen document: on-device OCR (Yaqeen's Tesseract models, Arabic and English) and the
  * multilingual embedding model. Images and text never leave the device here.
  */
 import { createWorker, type Worker } from "tesseract.js";
 import { env, pipeline, type FeatureExtractionPipeline } from "@huggingface/transformers";
 import type { OffscreenRequest } from "../shared/messages";
-import { prepareForOcr } from "../shared/ocrImage";
+import { OCR_PARAMS, readImage, type OcrLang } from "../shared/ocr";
 
 // Same model that produced the ayah embeddings (backend/data/quran_embeddings.npy), as ONNX.
 const EMBEDDING_MODEL = "Xenova/multilingual-e5-base";
 
-let ocrWorker: Promise<Worker> | null = null;
+const ocrWorkers = new Map<OcrLang, Promise<Worker>>();
 let embedder: Promise<FeatureExtractionPipeline> | null = null;
 
-function getOcr(): Promise<Worker> {
-  // Arabic only: posts are checked for Arabic text, and an English model mixed in turns
-  // decorated Arabic letters into Latin ones.
-  ocrWorker ??= createWorker("ara", 1, {
+function getOcr(lang: OcrLang): Promise<Worker> {
+  let w = ocrWorkers.get(lang);
+  // One language per worker: an English model mixed in turns decorated Arabic letters into Latin ones.
+  w ??= createWorker(lang === "ar" ? "ara" : "eng", 1, {
     workerPath: chrome.runtime.getURL("vendor/tesseract/worker.min.js"),
     corePath: chrome.runtime.getURL("vendor/tesseract-core/"),
     langPath: chrome.runtime.getURL("vendor/tessdata/"),
     workerBlobURL: false,
     gzip: true,
     cacheMethod: "none",
-  });
-  return ocrWorker;
+  }).then(async (worker) => (await worker.setParameters(OCR_PARAMS), worker));
+  w.catch(() => ocrWorkers.delete(lang));
+  ocrWorkers.set(lang, w);
+  return w;
 }
 
 function getEmbedder(): Promise<FeatureExtractionPipeline> {
@@ -38,12 +40,11 @@ function getEmbedder(): Promise<FeatureExtractionPipeline> {
 }
 
 async function ocr(dataUrl: string): Promise<string> {
-  const worker = await getOcr();
   const blob = await (await fetch(dataUrl)).blob();
-  const { data } = await worker.recognize(await prepareForOcr(blob));
+  const { text } = await readImage(blob, getOcr);
   // Lines in an image are usually one sentence wrapped to fit: check them as one text, so a
   // wrapped half of a hadith is not matched on its own against an unrelated verse.
-  return data.text.replace(/\s*\n\s*/g, " ").trim();
+  return text.replace(/\s*\n\s*/g, " ").trim();
 }
 
 /** Unit-length embedding of the post text, comparable with the precomputed ayah embeddings. */

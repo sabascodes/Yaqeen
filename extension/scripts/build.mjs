@@ -31,15 +31,14 @@ for (const page of ["options/options.html", "popup/popup.html"]) cpSync(join("sr
 cpSync("src/ui/card.css", join(out, "ui.css"));
 cpSync("src/offscreen/offscreen.html", join(out, "offscreen.html"));
 
-// On-device OCR engine (LSTM builds only, the mode Yaqeen uses) and Arabic language data, bundled so nothing is fetched at run time.
+// On-device OCR engine (LSTM builds only, the mode Yaqeen uses) and Yaqeen's own Arabic and English
+// models (ocr-models/, fine-tuned on decorative fonts; see ../ocr-training), bundled so nothing is fetched at run time.
 const vendor = join(out, "vendor");
 cpSync(join(pkgDir("tesseract.js"), "dist/worker.min.js"), join(vendor, "tesseract/worker.min.js"));
 const core = pkgDir("tesseract.js-core");
 mkdirSync(join(vendor, "tesseract-core"), { recursive: true });
 for (const f of readdirSync(core)) if (/^tesseract-core.*lstm\.wasm\.js$/.test(f)) cpSync(join(core, f), join(vendor, "tesseract-core", f));
-for (const lang of ["ara"]) {
-  cpSync(join(pkgDir(`@tesseract.js-data/${lang}`), "4.0.0_best_int", `${lang}.traineddata.gz`), join(vendor, "tessdata", `${lang}.traineddata.gz`));
-}
+cpSync("ocr-models", join(vendor, "tessdata"), { recursive: true });
 // ONNX runtime for the embedding model (the build Transformers.js loads in Chrome and Edge).
 const ort = join(pkgDir("onnxruntime-web"), "dist");
 for (const f of readdirSync(ort)) if (/^ort-wasm-simd-threaded\.asyncify\.(mjs|wasm)$/.test(f)) cpSync(join(ort, f), join(vendor, "ort", f));
