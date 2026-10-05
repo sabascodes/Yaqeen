@@ -51,7 +51,7 @@ const TEXT = {
     noText: "لم نجد نصًا مقروءًا في هذا الملف. جرّب صورة أوضح أو فيديو فيه كلام واضح.",
     mediaError: "تعذرت قراءة هذا الملف. جرّب صورة JPG أو PNG، أو فيديو MP4.",
     details: "تفاصيل تقنية (أرسلها لنا إن استمرت المشكلة)",
-    speechError: "تعذر تشغيل تحويل الكلام إلى نص على هذا الجهاز. جرّب متصفح Chrome أو Edge على جهاز كمبيوتر.",
+    speechError: "لم نتمكن من قراءة هذا الفيديو على هذا الجهاز. تحويل الكلام إلى نص لا يعمل على iPhone وiPad، وإذا لم يظهر نص مكتوب في الفيديو فلن نجد شيئًا. جرّب Chrome أو Edge على جهاز كمبيوتر.",
     asrNote: "تحويل الكلام إلى نص آلي وقد يخطئ، خاصة في التلاوة. راجع النص قبل الاعتماد على النتيجة.",
     tiktokNote: "لفيديو TikTok: احفظ الفيديو على جهازك أولًا ثم ارفعه هنا.",
     postNote: "هكذا تظهر يقين تحت منشور على X: اضغط زر يقين لعرض النتيجة.",
@@ -117,7 +117,7 @@ const TEXT = {
     noText: "We found no readable text in this file. Try a clearer image, or a video with clear speech.",
     mediaError: "This file could not be read. Try a JPG or PNG image, or an MP4 video.",
     details: "Technical details (send these to us if the problem continues)",
-    speechError: "Speech-to-text could not run on this device. Try Chrome or Edge on a computer.",
+    speechError: "We could not read this video on this device. Speech-to-text does not run on iPhone or iPad, and if the video shows no written text there is nothing to read. Try Chrome or Edge on a computer.",
     asrNote: "Speech-to-text is automatic and can make mistakes, especially with recitation. Review the text before relying on the result.",
     tiktokNote: "For a TikTok video: save it to your device first, then upload it here.",
     postNote: "This is how Yaqeen appears under a post on X: press the Yaqeen button to see the result.",
@@ -468,10 +468,14 @@ async function handleFile(file: File) {
       step("ocr");
       text = await media.readImage(file, contentLang);
     } else {
-      // Either part can fail on its own (no audio track, model download blocked); keep what works.
-      const speech = await media.listen(file, contentLang, step).catch((e) => (console.error(e), media.diag.push(`speech: failed (${e})`), (speechFailed = true), ""));
+      // The text shown in the video is read first: it is quick and needs no download, so a
+      // result appears even when the speech model cannot run on this device.
       const screen = file.type.startsWith("video/") ? await media.readFrames(file, contentLang, step) : "";
-      text = [speech, screen].filter(Boolean).join("\n");
+      // Either part can fail on its own (no audio track, model download blocked); keep what works.
+      const speech = media.canListen().ok
+        ? await media.listen(file, contentLang, step).catch((e) => (console.error(e), media.diag.push(`speech: failed (${e})`), (speechFailed = true), ""))
+        : ((media.diag.push(`speech: not attempted (${media.canListen().why})`), (speechFailed = !screen)), "");
+      text = [screen, speech].filter(Boolean).join("\n");
       document.getElementById("asrnote")!.hidden = !speech;
     }
     shown.forEach((el) => el.classList.add("done"));

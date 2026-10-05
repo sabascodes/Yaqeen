@@ -41,17 +41,31 @@ function getOcr(contentLang: ContentLang): Promise<Worker> {
   return w;
 }
 
+/** The language the last image was actually read in (it can differ from the one picked). */
+export let readAs: ContentLang = "ar";
+
 /**
  * Text read from an image (a file, or a canvas holding a video frame). Lines in an image are
  * usually one sentence wrapped to fit, so they are joined; otherwise a wrapped half of a hadith
  * could be checked on its own and match an unrelated verse.
+ * If the picked language reads poorly, the other one is tried, so an English picture read
+ * with Arabic picked does not come out as nonsense.
  */
 export async function readImage(img: Blob | HTMLCanvasElement, contentLang: ContentLang): Promise<string> {
-  const worker = await getOcr(contentLang);
   const canvas = await prepareForOcr(img);
   note(`image: read at ${canvas.width}x${canvas.height}`);
-  const { data } = await worker.recognize(canvas);
-  return tidy(data.text, contentLang).replace(/\n/g, " ");
+  const read = async (l: ContentLang) => {
+    const { data } = await (await getOcr(l)).recognize(canvas);
+    return { lang: l, text: tidy(data.text, l).replace(/\n/g, " "), confidence: data.confidence };
+  };
+  let best = await read(contentLang);
+  if (best.confidence < 60) {
+    const other = await read(contentLang === "ar" ? "en" : "ar");
+    note(`reading: ${best.lang} ${Math.round(best.confidence)}%, ${other.lang} ${Math.round(other.confidence)}%`);
+    if (other.text && other.confidence > best.confidence + 10) best = other;
+  }
+  readAs = best.lang;
+  return best.text;
 }
 
 let asr: Promise<AutomaticSpeechRecognitionPipeline> | null = null;
@@ -97,8 +111,25 @@ export async function audioSamples(file: Blob): Promise<Float32Array | null> {
   }
 }
 
+/**
+ * Whether speech-to-text can run here. The model is about 250 MB and needs WebAssembly memory
+ * that iPhone and iPad browsers do not give a web page, so it is not attempted there.
+ */
+export function canListen(): { ok: boolean; why?: string } {
+  const ua = navigator.userAgent;
+  const iOS = /iPhone|iPad|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1);
+  if (iOS) return { ok: false, why: "iPhone or iPad" };
+  if (typeof WebAssembly === "undefined") return { ok: false, why: "no WebAssembly" };
+  return { ok: true };
+}
+
 /** Speech in the file, as text. Empty when there is no usable audio. */
 export async function listen(file: Blob, contentLang: ContentLang, onProgress: Progress): Promise<string> {
+  const can = canListen();
+  if (!can.ok) {
+    note(`speech: not attempted (${can.why})`);
+    return "";
+  }
   const samples = await audioSamples(file);
   if (!samples || !samples.some((x) => Math.abs(x) > 0.01)) {
     if (samples) note("audio: silent");
@@ -113,33 +144,62 @@ export async function listen(file: Blob, contentLang: ContentLang, onProgress: P
   return tidy(raw, contentLang);
 }
 
+/** Resolves when `el` fires `event`, rejects on an error or after `ms`. */
+function once(el: HTMLMediaElement, event: string, ms: number): Promise<void> {
+  return new Promise((ok, fail) => {
+    const done = (f: () => void) => {
+      clearTimeout(timer);
+      el.removeEventListener(event, onEvent);
+      el.removeEventListener("error", onError);
+      f();
+    };
+    const onEvent = () => done(ok);
+    const onError = () => done(() => fail(new Error(`the browser could not play this video (${el.error?.message || el.error?.code || "unknown"})`)));
+    const timer = setTimeout(() => done(() => fail(new Error(`timed out waiting for ${event}`))), ms);
+    el.addEventListener(event, onEvent);
+    el.addEventListener("error", onError);
+  });
+}
+
 /** Text shown on screen in a video, read from frames spread across it. */
 export async function readFrames(file: Blob, contentLang: ContentLang, onProgress: Progress): Promise<string> {
   const video = document.createElement("video");
+  // iPhone and iPad only load a video's frames when it is muted, inline and has been played once.
   video.muted = true;
+  video.playsInline = true;
+  video.setAttribute("playsinline", "");
   video.preload = "auto";
   video.src = URL.createObjectURL(file);
   try {
-    await new Promise((ok, fail) => ((video.onloadeddata = ok), (video.onerror = fail)));
-    const duration = Math.min(video.duration || 0, MAX_SECONDS);
+    const loaded = once(video, "loadeddata", 20000);
+    video.load();
+    await video.play().then(() => video.pause(), () => undefined);
+    await loaded;
+    const duration = Math.min(Number.isFinite(video.duration) ? video.duration : 0, MAX_SECONDS);
     note(`video: ${video.videoWidth}x${video.videoHeight}, ${(video.duration || 0).toFixed(1)} s`);
-    if (!duration || !video.videoWidth) return "";
+    if (!video.videoWidth) return "";
     const canvas = document.createElement("canvas");
     const scale = Math.min(1, 1280 / video.videoWidth);
     canvas.width = Math.round(video.videoWidth * scale);
     canvas.height = Math.round(video.videoHeight * scale);
     const lines: string[] = [];
-    for (let i = 0; i < FRAME_COUNT; i++) {
-      onProgress("frames", Math.round((i / FRAME_COUNT) * 100));
-      video.currentTime = (duration * (i + 0.5)) / FRAME_COUNT;
-      await new Promise((ok) => (video.onseeked = ok));
+    // A video whose length is unknown is read from its first frame only.
+    const count = duration ? FRAME_COUNT : 1;
+    for (let i = 0; i < count; i++) {
+      onProgress("frames", Math.round((i / count) * 100));
+      if (duration) {
+        const seeked = once(video, "seeked", 10000);
+        video.currentTime = (duration * (i + 0.5)) / count;
+        if (!(await seeked.then(() => true, (e) => (note(`video frame ${i + 1}: ${e.message}`), false)))) continue;
+      }
       canvas.getContext("2d")!.drawImage(video, 0, 0, canvas.width, canvas.height);
-      for (const line of (await readImage(canvas, contentLang)).split("\n")) if (isNewLine(line, lines)) lines.push(line);
+      const line = await readImage(canvas, contentLang);
+      if (isNewLine(line, lines)) lines.push(line);
     }
-    note(`on-screen text: ${lines.length} line(s)`);
+    note(`on-screen text: ${lines.length} part(s)`);
     return lines.join("\n");
   } catch (e) {
-    note(`video frames: failed (${e instanceof Event ? "the browser could not play this video" : e})`);
+    note(`video frames: failed (${e instanceof Error ? e.message : e})`);
     return "";
   } finally {
     URL.revokeObjectURL(video.src);
