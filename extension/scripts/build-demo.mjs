@@ -1,7 +1,9 @@
 // Builds the web demo into demo-dist/ (deployed to Netlify, see ../netlify.toml).
 import { build } from "esbuild";
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync } from "node:fs";
-import { join } from "node:path";
+import { execFileSync } from "node:child_process";
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { join, relative } from "node:path";
+import { zipSync } from "fflate";
 
 const out = "demo-dist";
 rmSync(out, { recursive: true, force: true });
@@ -19,6 +21,7 @@ await build({
   logLevel: "info",
 });
 cpSync("demo/index.html", join(out, "index.html"));
+cpSync("demo/privacy.html", join(out, "privacy.html"));
 cpSync("demo/favicon.png", join(out, "favicon.png"));
 
 // In-browser OCR: the Tesseract engine and Yaqeen's Arabic model, served by the site itself.
@@ -35,4 +38,17 @@ for (const f of ["quran.json", "hadeethenc.json"]) {
   if (!existsSync(src)) throw new Error(`${src} is missing; run fetch_quran.py and build_hadith.py first.`);
   cpSync(src, join(out, "data", f));
 }
+// The extension itself, built with the same real data and zipped, so people can install it from
+// the site's Install page without running the Colab notebook. The same zip is the store package.
+execFileSync(process.execPath, ["scripts/build.mjs", "--minify"], { stdio: "inherit" });
+const files = {};
+(function add(dir) {
+  for (const f of readdirSync(dir)) {
+    const p = join(dir, f);
+    if (statSync(p).isDirectory()) add(p);
+    else files[relative("dist", p).split("\\").join("/")] = readFileSync(p);
+  }
+})("dist");
+writeFileSync(join(out, "yaqeen-extension.zip"), zipSync(files, { level: 9 }));
+console.log("Zipped the extension to", join(out, "yaqeen-extension.zip"));
 console.log("Built demo in", out);
