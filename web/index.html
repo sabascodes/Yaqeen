@@ -58,7 +58,7 @@
   <section class="section section--white" id="types">
     <div class="container">
       <h2 data-i18n="clT"></h2><p class="section__sub" data-i18n="clS"></p>
-      <div class="grid grid--5" id="classes"></div>
+      <div class="grid grid--6" id="classes"></div>
       <div class="demo" id="demoCards" aria-label="Examples"></div>
     </div>
   </section>
@@ -90,8 +90,8 @@ const I18N = {
     trust:'مصادر معتمدة فقط · بلا فتاوى · عربي وإنجليزي',
     stT:'كيف يعمل يقين؟', stS:'من المنشور إلى الحكم الموثّق، أثناء تصفحك.',
     steps:[['اكتشاف النص','يرصد يقين النصوص الدينية داخل المنشورات أثناء تصفحك.'],['استخراج من الصور','يستخرج النصوص من الصور بتقنية OCR ليحلّلها كما يحلّل النص.'],['مطابقة دلالية','يحوّل النص إلى تمثيل دلالي ويطابقه بقاعدة المصادر المعتمدة (RAG).'],['نتيجة موثّقة','يعرض التصنيف مع المرجع واسم العالم المصحّح، دون فتوى من عنده.']],
-    clT:'خمسة تصنيفات واضحة', clS:'كل نتيجة مقرونة بمصدرها ومرجعها.',
-    cl:{quran:'النص مطابق لآية في المصحف، مع اسم السورة ورقم الآية.',hadith:'حديث ثابت، مع اسم من صححه من العلماء والمرجع.',wording:'النص قريب لكن لفظه مختلف، ونعرض لك اللفظ الصحيح لتشاركه.',weak:'حكم العلماء بضعفه أو وضعه، مع ذكر المرجع.',notfound:'لم نجده في المصادر المعتمدة لدينا، ولا نخمّن.'},
+    clT:'ستة تصنيفات واضحة', clS:'كل نتيجة مقرونة بمصدرها ومرجعها.',
+    cl:{quran:'النص مطابق لآية في المصحف، مع اسم السورة ورقم الآية.',hadith:'حديث ثابت، مع اسم من صححه من العلماء والمرجع.',wording:'النص قريب لكن لفظه مختلف، ونعرض لك اللفظ الصحيح لتشاركه.',weak:'حكم العلماء بضعفه أو وضعه، مع ذكر المرجع.',differed:'اختلف العلماء في الحكم عليه، فنعرض كل حكم مع صاحبه ومرجعه دون ترجيح.',notfound:'لم نجده في المصادر المعتمدة لدينا، ولا نخمّن.'},
     prT:'مبادئنا',
     pr:[['مصادر معتمدة فقط','لا يخرج يقين عن قاعدة المصادر المعتمدة، ولا يبحث في أي مكان آخر.'],['لا فتاوى من عندنا','ننقل حكم العلماء مع مرجعه كما ورد، ولا نصدر حكمًا من عندنا.'],['لا تخمين','إن لم نجد المصدر قلنا لك «لم نعثر على المصدر»، ولا نقرّب النتيجة.']],
     ctaT:'تحقّق قبل أن تشارك',
@@ -104,8 +104,8 @@ const I18N = {
     trust:'Approved sources only · No rulings issued · Arabic & English',
     stT:'How Yaqeen works', stS:'From post to documented ruling, while you browse.',
     steps:[['Detect the text','Yaqeen spots religious text inside posts as you browse.'],['Read images','It extracts text from images with OCR and analyzes it like any other text.'],['Semantic matching','The text becomes a semantic representation, matched against approved sources (RAG).'],['Documented result','It shows the classification with the reference and the scholar who graded it, never its own ruling.']],
-    clT:'Five clear classifications', clS:'Every result comes with its source and reference.',
-    cl:{quran:'The text matches a Quran verse, with surah name and verse number.',hadith:'An authenticated hadith, with the scholar who graded it and the reference.',wording:'Close, but the wording differs. We show the correct wording to share.',weak:'Scholars ruled it weak or fabricated, with the reference cited.',notfound:'Not in our approved sources. We never guess.'},
+    clT:'Six clear classifications', clS:'Every result comes with its source and reference.',
+    cl:{quran:'The text matches a Quran verse, with surah name and verse number.',hadith:'An authenticated hadith, with the scholar who graded it and the reference.',wording:'Close, but the wording differs. We show the correct wording to share.',weak:'Scholars ruled it weak or fabricated, with the reference cited.',differed:'Scholars differed; we show each ruling with its scholar and reference, without choosing.',notfound:'Not in our approved sources. We never guess.'},
     prT:'Our principles',
     pr:[['Approved sources only','Yaqeen never goes beyond its approved sources database and never searches elsewhere.'],['No rulings of our own','We relay scholars’ rulings with their references exactly as cited. We issue no rulings.'],['No guessing','If we can’t find the source, we say “Source not found” instead of approximating.']],
     ctaT:'Verify before you share',
@@ -129,7 +129,7 @@ function setLang(lang){
   document.getElementById('demoCards').innerHTML = YQ.types.map(t => YQ.card(YQ.sample(t, lang), lang)).join('');
   localStorage.setItem('yaqeen-lang', lang);
 }
-YQ.types = ['quran','hadith','wording','weak','notfound'];
+YQ.types = ['quran','hadith','wording','weak','differed','notfound'];
 document.getElementById('langBtn').addEventListener('click', () => setLang(document.documentElement.lang === 'ar' ? 'en' : 'ar'));
 setLang(localStorage.getItem('yaqeen-lang') || 'ar');
 </script>

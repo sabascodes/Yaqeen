@@ -1,0 +1,9 @@
+# Live web demo of Yaqeen (extension/demo). The browser extension itself is built with `npm run build`.
+[build]
+  base = "extension"
+  command = "npm install --ignore-scripts && npm run build:demo"
+  publish = "demo-dist"
+
+[functions]
+  directory = "netlify/functions"
+

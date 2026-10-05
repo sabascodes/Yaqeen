@@ -1,0 +1,4 @@
+# للمطابقة الدلالية بملف data/quran_embeddings.npy (اختياري، حجمه كبير لأنه يثبّت PyTorch)
+-r requirements.txt
+numpy
+sentence-transformers
