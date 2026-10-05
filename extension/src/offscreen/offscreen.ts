@@ -1,32 +1,31 @@
 /**
- * Offscreen document: on-device OCR (Yaqeen's Tesseract models, Arabic and English) and the
+ * Offscreen document: on-device OCR (Yaqeen's Arabic Tesseract model) and the
  * multilingual embedding model. Images and text never leave the device here.
  */
 import { createWorker, type Worker } from "tesseract.js";
 import { env, pipeline, type FeatureExtractionPipeline } from "@huggingface/transformers";
 import type { OffscreenRequest } from "../shared/messages";
-import { OCR_PARAMS, readImage, type OcrLang } from "../shared/ocr";
+import { OCR_PARAMS, readImage } from "../shared/ocr";
 
 // Same model that produced the ayah embeddings (backend/data/quran_embeddings.npy), as ONNX.
 const EMBEDDING_MODEL = "Xenova/multilingual-e5-base";
 
-const ocrWorkers = new Map<OcrLang, Promise<Worker>>();
+let ocrWorker: Promise<Worker> | null = null;
 let embedder: Promise<FeatureExtractionPipeline> | null = null;
 
-function getOcr(lang: OcrLang): Promise<Worker> {
-  let w = ocrWorkers.get(lang);
-  // One language per worker: an English model mixed in turns decorated Arabic letters into Latin ones.
-  w ??= createWorker(lang === "ar" ? "ara" : "eng", 1, {
+function getOcr(): Promise<Worker> {
+  // Arabic only: the approved sources are Arabic, and an English model mixed in turns decorated
+  // Arabic letters into Latin ones.
+  ocrWorker ??= createWorker("ara", 1, {
     workerPath: chrome.runtime.getURL("vendor/tesseract/worker.min.js"),
     corePath: chrome.runtime.getURL("vendor/tesseract-core/"),
     langPath: chrome.runtime.getURL("vendor/tessdata/"),
     workerBlobURL: false,
     gzip: true,
     cacheMethod: "none",
-  }).then(async (worker) => (await worker.setParameters(OCR_PARAMS), worker));
-  w.catch(() => ocrWorkers.delete(lang));
-  ocrWorkers.set(lang, w);
-  return w;
+  }).then(async (w) => (await w.setParameters(OCR_PARAMS), w));
+  ocrWorker.catch(() => (ocrWorker = null));
+  return ocrWorker;
 }
 
 function getEmbedder(): Promise<FeatureExtractionPipeline> {
@@ -41,7 +40,7 @@ function getEmbedder(): Promise<FeatureExtractionPipeline> {
 
 async function ocr(dataUrl: string): Promise<string> {
   const blob = await (await fetch(dataUrl)).blob();
-  const { text } = await readImage(blob, getOcr);
+  const text = await readImage(blob, getOcr);
   // Lines in an image are usually one sentence wrapped to fit: check them as one text, so a
   // wrapped half of a hadith is not matched on its own against an unrelated verse.
   return text.replace(/\s*\n\s*/g, " ").trim();

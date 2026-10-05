@@ -11,7 +11,6 @@ import { dorarQuery, dorarResultHtml, parseDorarHtml } from "../src/sources/dora
 import { t, type Lang } from "../src/shared/i18n";
 import { bindCopy, badgeHtml, cardHtml, esc, TYPE } from "../src/ui/card";
 import { CHIP_MARK, markSvg } from "../src/ui/logo";
-import type { OcrLang } from "../src/shared/ocr";
 
 const TEXT = {
   ar: {
@@ -33,9 +32,7 @@ const TEXT = {
     sources: "المصادر: موسوعة القرآن الكريم quranenc.com · موسوعة الأحاديث النبوية hadeethenc.com · الدرر السنية dorar.net",
     demoNote: "نسخة العرض لا تشمل المطابقة بالمعنى، وهي متاحة في الإضافة. قراءة الصور تتم داخل متصفحك.",
     picTitle: "تحقّق من صورة",
-    picNote: "ارفع لقطة شاشة أو صورة منشور فيها آية أو حديث. يقرأ يقين النص المكتوب في الصورة، حتى بالخطوط المزخرفة، ثم يتحقق منه. تتم القراءة داخل متصفحك ولا تُرفع الصورة إلى أي خادم.",
-    contentLang: "ما لغة النص في الصورة؟",
-    contentLangs: { ar: "العربية", en: "الإنجليزية" },
+    picNote: "ارفع لقطة شاشة أو صورة منشور فيها آية أو حديث باللغة العربية. يقرأ يقين النص العربي المكتوب في الصورة، حتى بالخطوط المزخرفة، ثم يتحقق منه. تتم القراءة داخل متصفحك ولا تُرفع الصورة إلى أي خادم.",
     pick: "اختر صورة",
     drop: "أو اسحب الصورة وأفلتها هنا",
     reading: "جارٍ قراءة النص في الصورة… (أول مرة تستغرق وقتًا أطول لتحميل نموذج القراءة)",
@@ -94,9 +91,7 @@ const TEXT = {
     sources: "Sources: QuranEnc quranenc.com · HadeethEnc hadeethenc.com · Dorar dorar.net",
     demoNote: "This demo leaves out meaning-based matching, which is in the extension. Pictures are read inside your browser.",
     picTitle: "Check a picture",
-    picNote: "Upload a screenshot or a post picture with an ayah or hadith. Yaqeen reads the text in it, decorative fonts included, then checks it. Reading happens in your browser; the picture is never uploaded.",
-    contentLang: "What language is the text in the picture?",
-    contentLangs: { ar: "Arabic", en: "English" },
+    picNote: "Upload a screenshot or a post picture with an ayah or hadith in Arabic. Yaqeen reads the Arabic text in it, decorative fonts included, then checks it. Reading happens in your browser; the picture is never uploaded.",
     pick: "Choose a picture",
     drop: "or drag and drop it here",
     reading: "Reading the text in the picture… (the first time takes longer while the reading model loads)",
@@ -288,10 +283,6 @@ function viewHtml(x: (typeof TEXT)[Lang]): string {
         <section class="panel">
           <h2>${esc(x.picTitle)}</h2>
           <p class="muted">${esc(x.picNote)}</p>
-          <fieldset class="seg">
-            <legend>${esc(x.contentLang)}</legend>
-            ${(["ar", "en"] as const).map((l) => `<label><input type="radio" name="clang" value="${l}"${l === contentLang ? " checked" : ""}><span>${esc(x.contentLangs[l])}</span></label>`).join("")}
-          </fieldset>
           <label class="drop" id="drop">
             <input type="file" id="file" accept="image/*" hidden>
             <span class="btn btn--primary">${esc(x.pick)}</span>
@@ -385,15 +376,9 @@ function viewHtml(x: (typeof TEXT)[Lang]): string {
   }
 }
 
-/** The language of the text in the uploaded picture; it is read in that language first. */
-let contentLang: OcrLang = "ar";
-
 function bindPicture() {
   const input = document.getElementById("file") as HTMLInputElement | null;
   if (!input) return;
-  document.querySelectorAll<HTMLInputElement>('input[name="clang"]').forEach((r) =>
-    r.addEventListener("change", () => (contentLang = r.value as OcrLang)),
-  );
   const drop = document.getElementById("drop")!;
   input.addEventListener("change", () => input.files?.[0] && void handlePicture(input.files[0]));
   drop.addEventListener("dragover", (e) => (e.preventDefault(), drop.classList.add("drop--over")));
@@ -427,7 +412,7 @@ async function handlePicture(file: File) {
   status.textContent = x.reading;
   try {
     const { readPicture } = await import("./picture");
-    const { text } = await readPicture(file, contentLang);
+    const text = await readPicture(file);
     status.textContent = "";
     if (!text) {
       out.innerHTML = `<p class="note">${esc(x.noText)}</p>`;

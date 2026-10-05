@@ -21,7 +21,7 @@ await build({
 cpSync("demo/index.html", join(out, "index.html"));
 cpSync("demo/favicon.png", join(out, "favicon.png"));
 
-// In-browser OCR: the Tesseract engine and Yaqeen's Arabic and English models, served by the site itself.
+// In-browser OCR: the Tesseract engine and Yaqeen's Arabic model, served by the site itself.
 const pkgDir = (name) => join("node_modules", name);
 const vendor = join(out, "vendor");
 cpSync(join(pkgDir("tesseract.js"), "dist/worker.min.js"), join(vendor, "tesseract/worker.min.js"));
