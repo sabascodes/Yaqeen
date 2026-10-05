@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yaqeen · يقين</title>
+<meta name="description" content="Yaqeen checks Quran verses and hadith in social media posts against approved sources only.">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700&family=Inter:wght@400;600;700&display=swap">
+<link rel="stylesheet" href="ui.css">
+<style>
+  body { margin:0; background:var(--bg) }
+  main { max-width:760px; margin:0 auto; padding:24px 16px 48px; display:flex; flex-direction:column; gap:16px }
+  .top { display:flex; justify-content:space-between; align-items:center }
+  .logo { display:inline-flex; align-items:center; gap:10px; font-weight:700; font-size:26px; color:var(--brand) }
+  .logo__mark { width:40px; height:40px; border-radius:12px; background:var(--brand); display:grid; place-items:center }
+  .tagline { font-size:17px; margin:0 }
+  .panel { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:20px; display:flex; flex-direction:column; gap:12px }
+  h2 { font-size:18px; margin:0 }
+  .row { display:flex; gap:8px; align-items:flex-start }
+  textarea { flex:1; min-width:0; background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:10px; font:inherit; resize:vertical; min-height:70px }
+  .muted { color:var(--muted); font-size:13px; margin:0 }
+  .foot { text-align:center }
+  .post { border:1px solid var(--border); border-radius:14px; padding:14px; display:flex; flex-direction:column; gap:10px }
+  .post__user { display:flex; align-items:center; gap:8px }
+  .avatar { width:32px; height:32px; border-radius:50%; background:var(--border); display:grid; place-items:center; font-weight:700 }
+  .post__text { margin:0; font-size:16px; line-height:1.8 }
+  .post__yq { display:flex; gap:8px; align-items:center; flex-wrap:wrap }
+  .post__badges { display:flex; gap:6px; flex-wrap:wrap; font-size:13px; color:var(--muted) }
+  button:disabled { opacity:.5 }
+  .yq .card { max-width:none }
+</style>
+</head>
+<body>
+<main class="yq" id="app"></main>
+<script src="demo.js" type="module"></script>
+</body>
+</html>
