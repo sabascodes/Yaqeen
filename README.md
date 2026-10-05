@@ -12,10 +12,13 @@ yaqeen/
 │   ├── styles.css
 │   └── cards.js
 ├── backend/      خدمة التحقق (Python)
-│   ├── main.py          الخدمة /verify
+│   ├── main.py          الخدمة /verify (القرآن أولًا ثم الحديث)
+│   ├── quran.py         مطابقة القرآن (حرفية + دلالية اختيارية)
+│   ├── fetch_quran.py   تنزيل نص المصحف من QuranEnc مرة واحدة
+│   ├── data/            quran.json (بعد التنزيل) و quran_embeddings.npy
 │   ├── hadith.py        البحث في الدرر السنية والتصنيف
-│   ├── test_hadith.py   اختبارات تعمل دون إنترنت
-│   ├── requirements.txt / requirements-dev.txt
+│   ├── test_*.py        اختبارات تعمل دون إنترنت
+│   ├── requirements.txt / requirements-dev.txt / requirements-semantic.txt
 │   └── run.bat / run.sh تشغيل بنقرة
 └── extension/    إضافة المتصفح (TypeScript)
 ```
@@ -32,15 +35,29 @@ yaqeen/
    ```
 3. ويندوز: شغّل `run.bat`  ·  ماك/لينكس: `./run.sh`
    (يثبّت المكتبات ويشغّل الخدمة على http://127.0.0.1:8000)
-4. جرّب الخدمة: http://127.0.0.1:8000/docs ← POST /verify ← Try it out
+4. لربط القرآن، مرة واحدة (بعد تفعيل البيئة `.venv`):
+   ```
+   python fetch_quran.py
+   ```
+   ثم أعد تشغيل الخدمة. تأكد من http://127.0.0.1:8000 أن `quran_ayat` = 6236.
+5. (اختياري) المطابقة الدلالية بملف `data/quran_embeddings.npy`: ثبّت `pip install -r requirements-semantic.txt`،
+   واضبط اسم النموذج الذي أنشأ الملف قبل التشغيل، مثلًا:
+   ```
+   set YAQEEN_EMBED_MODEL=اسم-النموذج        (ويندوز)
+   export YAQEEN_EMBED_MODEL=اسم-النموذج     (ماك/لينكس)
+   ```
+   وإذا كان النموذج من عائلة e5 أضف `YAQEEN_EMBED_QUERY_PREFIX="query: "`.
+   تأكد من http://127.0.0.1:8000 أن `semantic` = true.
+6. جرّب الخدمة: http://127.0.0.1:8000/docs ← POST /verify ← Try it out
    ```
    {"text": "إنما الأعمال بالنيات"}
    ```
-5. افتح `web/popup.html` واكتب نصًا في خانة التحقق وسترى البطاقة.
+7. افتح `web/popup.html` واكتب نصًا في خانة التحقق وسترى البطاقة.
 
 ## ملاحظات
 - بيانات `samples` في `web/cards.js` أمثلة تجريبية للعرض فقط.
-- خدمة Python تتحقق من الأحاديث فقط؛ مطابقة القرآن موجودة في الإضافة (`extension/`).
+- خدمة Python تتحقق من القرآن (من QuranEnc) ثم من الأحاديث (من الدرر السنية).
+- ملف التمثيلات `data/quran_embeddings.npy` (6236 × 768 بترتيب المصحف) لا يُستخدم إلا مع النموذج نفسه الذي أنشأه؛ بدونه تعمل المطابقة الحرفية وحدها.
 - أسماء التصنيفات وألفاظ الأحكام موحّدة بين `backend/hadith.py` و`web/cards.js` والإضافة؛ أي تعديل عليها يكون في المواضع الثلاثة.
 - قيّد `allow_origins` في `backend/main.py` قبل أي نشر.
 - أظهر اسم «الدرر السنية» مصدرًا للأحكام، وراسلهم بالإذن قبل أي استخدام موسّع.

@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from hadith import check_hadith
+import quran
 
 # أسماء التصنيفات نفسها المستخدمة في web/cards.js وفي الإضافة (extension/src/shared/i18n.ts).
 TYPE = {"مطابق لنص المصحف": "quran", "حديث ثابت": "hadith", "ورد بلفظ مختلف": "wording",
@@ -20,7 +21,10 @@ class Q(BaseModel):
 
 @app.get("/")
 def health():
-    return {"app": "yaqeen", "ok": True}
+    index = quran.load_index()
+    return {"app": "yaqeen", "ok": True,
+            "quran_ayat": len(index.ayat) if index else 0,
+            "semantic": bool(index and index.embed)}
 
 
 @app.post("/verify")
@@ -28,10 +32,14 @@ def verify(q: Q):
     text = q.text.strip()
     if len(text) < 4:
         return {"status": "needs_input", "note": "النص قصير جدًا."}
-    try:
-        r = check_hadith(text)
-    except Exception:
-        return {"status": "error"}
+    # القرآن أولًا (على الخادم نفسه)، ثم الحديث من الدرر السنية.
+    index = quran.load_index()
+    r = quran.check_quran(text, index) if index else None
+    if r is None:
+        try:
+            r = check_hadith(text)
+        except Exception:
+            return {"status": "error"}
     s = r.get("source", {})
     return {"status": "ok", "card": {
         "type": TYPE[r["classification"]], "detected": r["detected_text"],
