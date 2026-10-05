@@ -26,7 +26,11 @@ export const THRESHOLDS = {
   dorarSame: 0.65,
   /** Lexical floor for the semantic fallback to be considered at all. */
   semanticFloor: 0.55,
-  semanticMin: 0.9,
+  /**
+   * multilingual-e5-base cosine similarity for a paraphrase. e5 scores sit close together
+   * (unrelated ayat are around 0.8), so this is provisional until calibrated on real posts.
+   */
+  semanticMin: 0.88,
 };
 
 export interface CheckDeps {
@@ -34,8 +38,11 @@ export interface CheckDeps {
   hadith: HadithIndex | null;
   /** Online Dorar lookup; undefined when the user turned it off. */
   dorar?: (text: string) => Promise<DorarHadith[]>;
-  /** Cosine similarity of `query` to each candidate, from the on-device embedding model. */
-  semantic?: (query: string, candidates: string[]) => Promise<number[]>;
+  /**
+   * Nearest ayat to `text` by meaning (positions in mushaf order, cosine score), from the
+   * on-device multilingual-e5-base model and the precomputed ayah embeddings.
+   */
+  semanticSearch?: (text: string) => Promise<{ index: number; score: number }[]>;
   lang?: "ar" | "en";
 }
 
@@ -48,16 +55,23 @@ export interface CheckResult {
 }
 
 async function checkQuran(f: Fragment, deps: CheckDeps): Promise<Verdict | null> {
-  const hit = deps.quran?.search(f.text);
-  if (!hit) return null;
-  let sim = hit.similarity;
-  const sourceText = hit.ayat.map((a) => a.text).join(" ");
-  if (sim < THRESHOLDS.quranClose && sim >= THRESHOLDS.semanticFloor && deps.semantic) {
+  if (!deps.quran) return null;
+  let hit = deps.quran.search(f.text);
+  let sim = hit?.similarity ?? 0;
+  // Meaning-based search only where it can matter: a quote framed as Quran, or a near miss.
+  if (sim < THRESHOLDS.quranClose && deps.semanticSearch && (f.quranLike || sim >= THRESHOLDS.semanticFloor)) {
     // The model may be unavailable (first download, offline); fall back to the lexical result.
-    const [s] = await deps.semantic(f.text, [sourceText]).catch(() => [0]);
-    if ((s ?? 0) >= THRESHOLDS.semanticMin) sim = THRESHOLDS.quranClose;
+    const near = await deps.semanticSearch(f.text).catch(() => []);
+    const again = near.length ? deps.quran.search(f.text, near.map((n) => n.index)) : null;
+    if (again && again.similarity >= sim) hit = again;
+    if (hit) {
+      sim = hit.similarity;
+      const cos = Math.max(0, ...near.filter((n) => n.index >= hit!.first && n.index <= hit!.last).map((n) => n.score));
+      if (sim >= THRESHOLDS.semanticFloor && cos >= THRESHOLDS.semanticMin) sim = THRESHOLDS.quranClose;
+    }
   }
-  if (sim < THRESHOLDS.quranClose) return null;
+  if (!hit || sim < THRESHOLDS.quranClose) return null;
+  const sourceText = hit.ayat.map((a) => a.text).join(" ");
   const first = hit.ayat[0]!;
   const last = hit.ayat[hit.ayat.length - 1]!;
   const range = first.aya === last.aya ? `${first.aya}` : `${first.aya}-${last.aya}`;

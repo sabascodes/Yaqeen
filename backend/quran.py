@@ -2,9 +2,9 @@
 
 - نص المصحف من موسوعة القرآن الكريم QuranEnc (من ملف المراجع المعتمد)، يُنزّل مرة بـ fetch_quran.py
   إلى data/quran.json.
-- التمثيلات الدلالية للآيات في data/quran_embeddings.npy (6236 × 768، بترتيب المصحف).
-  تُستخدم فقط إذا ضُبط اسم النموذج الذي أنشأها في المتغير YAQEEN_EMBED_MODEL، لأن نص المنشور
-  يجب أن يُحوَّل بالنموذج نفسه. بدونها تعمل المطابقة الحرفية وحدها.
+- التمثيلات الدلالية للآيات في data/quran_embeddings.npy (6236 × 768، بترتيب المصحف)، أنشأها
+  النموذج intfloat/multilingual-e5-base، فيُحوَّل نص المنشور بالنموذج نفسه مع البادئة "query: ".
+  تعمل إذا ثُبّتت مكتبات requirements-semantic.txt؛ وإلا تعمل المطابقة الحرفية وحدها.
 - منطق المطابقة نفسه في الإضافة (extension/src/core/normalize.ts و quranIndex.ts).
 """
 import json
@@ -18,13 +18,17 @@ from rapidfuzz import fuzz
 DATA = Path(__file__).parent / "data"
 QURAN_JSON = DATA / "quran.json"
 EMBEDDINGS = DATA / "quran_embeddings.npy"
-EMBED_MODEL = os.environ.get("YAQEEN_EMBED_MODEL", "").strip()
-# بعض النماذج (مثل e5) تتطلب بادئة قبل النص؛ اتركيها فارغة لغيرها.
-EMBED_QUERY_PREFIX = os.environ.get("YAQEEN_EMBED_QUERY_PREFIX", "")
+# النموذج الذي أنشأ data/quran_embeddings.npy (حسب صبا). ضعي YAQEEN_EMBED_MODEL=off لإيقاف المطابقة الدلالية.
+EMBED_MODEL = os.environ.get("YAQEEN_EMBED_MODEL", "intfloat/multilingual-e5-base").strip()
+# نماذج e5 تتطلب هذه البادئة قبل نص البحث.
+EMBED_QUERY_PREFIX = os.environ.get("YAQEEN_EMBED_QUERY_PREFIX", "query: ")
+SEMANTIC_STATUS = "off"
 
 EXACT = 0.98    # أقل من هذا يعني اختلاف كلمة على الأقل
 CLOSE = 0.80    # أقل من هذا لا نعدّه نقلًا للآية
-SEMANTIC_MIN = float(os.environ.get("YAQEEN_SEMANTIC_MIN", "0.93"))  # يُعاير بعد معرفة النموذج
+# تشابهات e5 متقاربة (الآيات غير المرتبطة نفسها حول 0.8)، فهذا الحد مبدئي ويُعاير على أمثلة حقيقية.
+# ولا يكفي وحده: يُشترط معه تشابه حرفي لا يقل عن 0.55.
+SEMANTIC_MIN = float(os.environ.get("YAQEEN_SEMANTIC_MIN", "0.88"))
 MIN_LETTERS = 12
 GRAM = 4
 
@@ -177,17 +181,26 @@ _index = None
 
 def load_index():
     """يحمّل النص والتمثيلات مرة واحدة. يرجع None إذا لم يُنزّل نص المصحف بعد."""
-    global _index
+    global _index, SEMANTIC_STATUS
     if _index is not None or not QURAN_JSON.exists():
         return _index
     ayat = json.loads(QURAN_JSON.read_text(encoding="utf-8"))
     embeddings = embed = None
-    if EMBED_MODEL and EMBEDDINGS.exists():
-        import numpy as np
-        from sentence_transformers import SentenceTransformer
-        embeddings = np.load(EMBEDDINGS).astype("float32")
-        embeddings /= np.linalg.norm(embeddings, axis=1, keepdims=True)
-        model = SentenceTransformer(EMBED_MODEL)
-        embed = lambda t: model.encode(EMBED_QUERY_PREFIX + t, normalize_embeddings=True)
+    if EMBED_MODEL.lower() in ("", "off"):
+        SEMANTIC_STATUS = "off"
+    elif not EMBEDDINGS.exists():
+        SEMANTIC_STATUS = "data/quran_embeddings.npy غير موجود"
+    else:
+        try:
+            import numpy as np
+            from sentence_transformers import SentenceTransformer
+        except ImportError:
+            SEMANTIC_STATUS = "ثبّتي requirements-semantic.txt لتفعيلها"
+        else:
+            embeddings = np.load(EMBEDDINGS).astype("float32")
+            embeddings /= np.linalg.norm(embeddings, axis=1, keepdims=True)
+            model = SentenceTransformer(EMBED_MODEL)
+            embed = lambda t: model.encode(EMBED_QUERY_PREFIX + t, normalize_embeddings=True)
+            SEMANTIC_STATUS = EMBED_MODEL
     _index = QuranIndex(ayat, embeddings, embed)
     return _index

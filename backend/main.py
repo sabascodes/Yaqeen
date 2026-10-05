@@ -24,7 +24,7 @@ def health():
     index = quran.load_index()
     return {"app": "yaqeen", "ok": True,
             "quran_ayat": len(index.ayat) if index else 0,
-            "semantic": bool(index and index.embed)}
+            "semantic": bool(index and index.embed), "semantic_model": quran.SEMANTIC_STATUS}
 
 
 @app.post("/verify")

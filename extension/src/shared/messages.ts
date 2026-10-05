@@ -20,4 +20,4 @@ export type CheckResponse = { ok: true; result: CheckResult; ocrText?: string } 
 // Messages between the service worker and the offscreen document.
 export type OffscreenRequest =
   | { target: "offscreen"; type: "ocr"; dataUrl: string }
-  | { target: "offscreen"; type: "embed-sim"; query: string; candidates: string[] };
+  | { target: "offscreen"; type: "embed"; text: string };

@@ -40,14 +40,11 @@ yaqeen/
    python fetch_quran.py
    ```
    ثم أعد تشغيل الخدمة. تأكد من http://127.0.0.1:8000 أن `quran_ayat` = 6236.
-5. (اختياري) المطابقة الدلالية بملف `data/quran_embeddings.npy`: ثبّت `pip install -r requirements-semantic.txt`،
-   واضبط اسم النموذج الذي أنشأ الملف قبل التشغيل، مثلًا:
+5. (اختياري) المطابقة الدلالية بملف `data/quran_embeddings.npy` (أنشأه النموذج `intfloat/multilingual-e5-base`):
    ```
-   set YAQEEN_EMBED_MODEL=اسم-النموذج        (ويندوز)
-   export YAQEEN_EMBED_MODEL=اسم-النموذج     (ماك/لينكس)
+   pip install -r requirements-semantic.txt
    ```
-   وإذا كان النموذج من عائلة e5 أضف `YAQEEN_EMBED_QUERY_PREFIX="query: "`.
-   تأكد من http://127.0.0.1:8000 أن `semantic` = true.
+   أول تشغيل بعدها ينزّل النموذج (حوالي 1.1GB) مرة واحدة. تأكد من http://127.0.0.1:8000 أن `semantic` = true.
 6. جرّب الخدمة: http://127.0.0.1:8000/docs ← POST /verify ← Try it out
    ```
    {"text": "إنما الأعمال بالنيات"}
@@ -57,7 +54,7 @@ yaqeen/
 ## ملاحظات
 - بيانات `samples` في `web/cards.js` أمثلة تجريبية للعرض فقط.
 - خدمة Python تتحقق من القرآن (من QuranEnc) ثم من الأحاديث (من الدرر السنية).
-- ملف التمثيلات `data/quran_embeddings.npy` (6236 × 768 بترتيب المصحف) لا يُستخدم إلا مع النموذج نفسه الذي أنشأه؛ بدونه تعمل المطابقة الحرفية وحدها.
+- ملف التمثيلات `data/quran_embeddings.npy` (6236 × 768 بترتيب المصحف) أنشأه `intfloat/multilingual-e5-base`، ويُستخدم مع النموذج نفسه في الخدمة والإضافة؛ بدون مكتبات المطابقة الدلالية تعمل المطابقة الحرفية وحدها.
 - أسماء التصنيفات وألفاظ الأحكام موحّدة بين `backend/hadith.py` و`web/cards.js` والإضافة؛ أي تعديل عليها يكون في المواضع الثلاثة.
 - قيّد `allow_origins` في `backend/main.py` قبل أي نشر.
 - أظهر اسم «الدرر السنية» مصدرًا للأحكام، وراسلهم بالإذن قبل أي استخدام موسّع.

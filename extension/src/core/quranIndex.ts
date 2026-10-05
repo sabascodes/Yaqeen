@@ -13,6 +13,9 @@ export interface QuranHit {
   ayat: Ayah[];
   /** Other places with an equally good match (repeated ayat such as in Ar-Rahman). */
   alsoAt: Ayah[];
+  /** Positions of the matched ayat in mushaf order (0 = Al-Fatihah 1). */
+  first: number;
+  last: number;
 }
 
 export class QuranIndex {
@@ -46,7 +49,8 @@ export class QuranIndex {
   }
 
   /** Best match for a fragment of a post, or null when nothing is close. */
-  search(fragment: string): QuranHit | null {
+  /** `extra`: more candidate positions, e.g. from the semantic search over all ayat. */
+  search(fragment: string, extra: number[] = []): QuranHit | null {
     const q = skeleton(fragment);
     if (q.length < MIN_QUERY) return null;
 
@@ -54,11 +58,12 @@ export class QuranIndex {
     for (const g of ngrams(q, GRAM)) {
       for (const idx of this.grams.get(g) ?? []) hits.set(idx, (hits.get(idx) ?? 0) + 1);
     }
-    const candidates = [...hits.entries()]
+    const lexical = [...hits.entries()]
       .filter(([, n]) => n >= 2)
       .sort((a, b) => b[1] - a[1])
       .slice(0, MAX_CANDIDATES)
       .map(([idx]) => idx);
+    const candidates = [...new Set([...lexical, ...extra.filter((i) => i >= 0 && i < this.ayat.length)])];
 
     const scored: { similarity: number; first: number; last: number }[] = [];
     for (const c of candidates) {
@@ -93,6 +98,8 @@ export class QuranIndex {
       similarity: Math.max(0, best.similarity),
       ayat: this.ayat.slice(best.first, best.last + 1),
       alsoAt,
+      first: best.first,
+      last: best.last,
     };
   }
 

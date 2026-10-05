@@ -21,7 +21,7 @@ const TEXT = {
     dorar:
       "البحث في الدرر السنية عن الأحاديث غير الموجودة محليًا (يُرسل نص الحديث المستخرج فقط إلى dorar.net)",
     semantic:
-      "المطابقة الدلالية على الجهاز لاكتشاف النصوص المنقولة بألفاظ مختلفة (يُنزّل نموذج لغوي مرة واحدة)",
+      "المطابقة الدلالية على الجهاز لاكتشاف النصوص المنقولة بألفاظ مختلفة (يُنزّل نموذج لغوي مرة واحدة، حوالي 280 ميجابايت)",
     autoCheck: "فحص المنشورات تلقائيًا أثناء التصفح",
     privacy: "الخصوصية",
     privacyItems: [
@@ -53,7 +53,7 @@ const TEXT = {
     lang: "Interface language",
     auto: "Follow browser",
     dorar: "Search Dorar for hadith not found locally (only the extracted hadith text is sent to dorar.net)",
-    semantic: "On-device semantic matching to catch paraphrased quotes (downloads a language model once)",
+    semantic: "On-device semantic matching to catch paraphrased quotes (downloads a language model once, about 280 MB)",
     autoCheck: "Check posts automatically while browsing",
     privacy: "Privacy",
     privacyItems: [

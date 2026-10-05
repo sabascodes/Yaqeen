@@ -211,20 +211,34 @@ describe("manual checks", () => {
   });
 });
 
-describe("semantic fallback", () => {
+describe("semantic search", () => {
   const paraphrase = "يا أيها المؤمنون اطلبوا العون بالصبر وبالصلاة فالله مع الصابرين";
-  it("uses the embedding model for paraphrased quotes", async () => {
-    const semantic = vi.fn(async () => [0.95]);
-    const r = await checkPost(`قال تعالى: ${paraphrase}`, deps({ semantic }));
-    expect(semantic).toHaveBeenCalled();
+  const at = (sura: number, aya: number) => AYAT.findIndex((a) => a.sura === sura && a.aya === aya);
+
+  it("finds a paraphrased ayah through the embedding search", async () => {
+    const semanticSearch = vi.fn(async () => [{ index: at(2, 153), score: 0.93 }]);
+    const r = await checkPost(`قال تعالى: ${paraphrase}`, deps({ semanticSearch }));
+    expect(semanticSearch).toHaveBeenCalled();
     expect(r.verdicts[0]).toMatchObject({ kind: "different_wording", ayat: [{ sura: 2, aya: 153 }] });
   });
 
+  it("does not accept a semantic hit below the threshold", async () => {
+    const semanticSearch = vi.fn(async () => [{ index: at(2, 153), score: 0.8 }]);
+    const r = await checkPost(`قال تعالى: ${paraphrase}`, deps({ semanticSearch }));
+    expect(r.verdicts[0]!.kind).toBe("not_found");
+  });
+
+  it("does not accept a semantic hit with too little wording in common", async () => {
+    const semanticSearch = vi.fn(async () => [{ index: at(2, 153), score: 0.99 }]);
+    const r = await checkPost("قال تعالى: إن الإنسان خلق في أحسن تقويم وجعل له سمعا وبصرا", deps({ semanticSearch }));
+    expect(r.verdicts.every((v) => v.ayat?.[0]?.aya !== 153)).toBe(true);
+  });
+
   it("keeps working when the model is unavailable", async () => {
-    const semantic = vi.fn(async () => {
+    const semanticSearch = vi.fn(async () => {
       throw new Error("offline");
     });
-    const r = await checkPost(`قال تعالى: ${paraphrase}`, deps({ semantic }));
+    const r = await checkPost(`قال تعالى: ${paraphrase}`, deps({ semanticSearch }));
     expect(r.verdicts[0]!.kind).toBe("not_found");
   });
 });
