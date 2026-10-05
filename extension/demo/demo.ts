@@ -11,8 +11,6 @@ import { dorarQuery, dorarResultHtml, parseDorarHtml } from "../src/sources/dora
 import { t, type Lang } from "../src/shared/i18n";
 import { bindCopy, badgeHtml, cardHtml, esc, TYPE } from "../src/ui/card";
 import { CHIP_MARK, markSvg } from "../src/ui/logo";
-import * as media from "./media";
-import type { Progress } from "./media";
 
 const TEXT = {
   ar: {
@@ -32,28 +30,9 @@ const TEXT = {
     loading: "جارٍ تحميل بيانات المصادر…",
     loadError: "تعذر تحميل بيانات المصادر.",
     sources: "المصادر: موسوعة القرآن الكريم quranenc.com · موسوعة الأحاديث النبوية hadeethenc.com · الدرر السنية dorar.net",
-    demoNote: "نسخة العرض لا تشمل المطابقة بالمعنى، وهي متاحة في الإضافة. قراءة الصور والفيديو تتم داخل متصفحك.",
+    demoNote: "نسخة العرض لا تشمل المطابقة بالمعنى، وهي متاحة في الإضافة.",
     other: "English",
-    tabs: { try: "جرّب بنفسك", media: "صورة أو فيديو", post: "على منشور", popup: "النافذة المنبثقة", settings: "الإعدادات", types: "أنواع النتائج" },
-    mediaTitle: "تحقّق من صورة أو فيديو",
-    mediaNote: "ارفع لقطة شاشة أو صورة أو فيديو محفوظًا من TikTok أو X أو Facebook. يقرأ يقين النص المكتوب في الصورة، ويحوّل الكلام في الفيديو إلى نص، ثم يتحقق منه. كل ذلك يتم داخل متصفحك، ولا يُرفع الملف إلى أي خادم.",
-    contentLang: "ما لغة المحتوى؟",
-    contentLangs: { ar: "العربية", en: "الإنجليزية" },
-    pick: "اختر صورة أو فيديو",
-    drop: "أو اسحب الملف وأفلته هنا",
-    sample: "جرّب صورة نموذجية",
-    sampleText: "قال تعالى: يا أيها الذين آمنوا استعينوا بالصبر والدعاء إن الله مع الصابرين",
-    steps: { ocr: "قراءة النص في الصورة…", model: "تنزيل نموذج تحويل الكلام إلى نص (مرة واحدة، قرابة 250 ميجابايت)", listen: "الاستماع إلى الكلام في الفيديو…", frames: "قراءة النص الظاهر في الفيديو…" },
-    found: "النص الذي وجدناه (يمكنك تصحيحه ثم إعادة التحقق)",
-    speech: "الكلام",
-    onScreen: "النص على الشاشة",
-    recheck: "تحقق من النص",
-    noText: "لم نجد نصًا مقروءًا في هذا الملف. جرّب صورة أوضح أو فيديو فيه كلام واضح.",
-    mediaError: "تعذرت قراءة هذا الملف. جرّب صورة JPG أو PNG، أو فيديو MP4.",
-    details: "تفاصيل تقنية (أرسلها لنا إن استمرت المشكلة)",
-    speechError: "لم نتمكن من قراءة هذا الفيديو على هذا الجهاز. تحويل الكلام إلى نص لا يعمل على iPhone وiPad، وإذا لم يظهر نص مكتوب في الفيديو فلن نجد شيئًا. جرّب Chrome أو Edge على جهاز كمبيوتر.",
-    asrNote: "تحويل الكلام إلى نص آلي وقد يخطئ، خاصة في التلاوة. راجع النص قبل الاعتماد على النتيجة.",
-    tiktokNote: "لفيديو TikTok: احفظ الفيديو على جهازك أولًا ثم ارفعه هنا.",
+    tabs: { try: "جرّب بنفسك", post: "على منشور", popup: "النافذة المنبثقة", settings: "الإعدادات", types: "أنواع النتائج" },
     postNote: "هكذا تظهر يقين تحت منشور على X: اضغط زر يقين لعرض النتيجة.",
     popupNote: "هذه النافذة تفتح من أيقونة يقين في شريط المتصفح.",
     popupLabel: "الصق آية أو حديثًا للتحقق منه",
@@ -98,28 +77,9 @@ const TEXT = {
     loading: "Loading source data…",
     loadError: "Could not load the source data.",
     sources: "Sources: QuranEnc quranenc.com · HadeethEnc hadeethenc.com · Dorar dorar.net",
-    demoNote: "This demo leaves out meaning-based matching, which is in the extension. Photos and videos are read inside your browser.",
+    demoNote: "This demo leaves out meaning-based matching, which is in the extension.",
     other: "العربية",
-    tabs: { try: "Try it", media: "Photo or video", post: "On a post", popup: "Popup", settings: "Settings", types: "Result types" },
-    mediaTitle: "Check a photo or video",
-    mediaNote: "Upload a screenshot, photo, or a video saved from TikTok, X or Facebook. Yaqeen reads the text in the image and turns the speech in the video into text, then checks it. All of this happens in your browser; the file is never uploaded.",
-    contentLang: "What language is the content in?",
-    contentLangs: { ar: "Arabic", en: "English" },
-    pick: "Choose a photo or video",
-    drop: "or drag and drop the file here",
-    sample: "Try a sample image",
-    sampleText: "قال تعالى: يا أيها الذين آمنوا استعينوا بالصبر والدعاء إن الله مع الصابرين",
-    steps: { ocr: "Reading the text in the image…", model: "Downloading the speech-to-text model (once, about 250 MB)", listen: "Listening to the speech in the video…", frames: "Reading the text shown in the video…" },
-    found: "The text we found (you can correct it and check again)",
-    speech: "Speech",
-    onScreen: "On-screen text",
-    recheck: "Check this text",
-    noText: "We found no readable text in this file. Try a clearer image, or a video with clear speech.",
-    mediaError: "This file could not be read. Try a JPG or PNG image, or an MP4 video.",
-    details: "Technical details (send these to us if the problem continues)",
-    speechError: "We could not read this video on this device. Speech-to-text does not run on iPhone or iPad, and if the video shows no written text there is nothing to read. Try Chrome or Edge on a computer.",
-    asrNote: "Speech-to-text is automatic and can make mistakes, especially with recitation. Review the text before relying on the result.",
-    tiktokNote: "For a TikTok video: save it to your device first, then upload it here.",
+    tabs: { try: "Try it", post: "On a post", popup: "Popup", settings: "Settings", types: "Result types" },
     postNote: "This is how Yaqeen appears under a post on X: press the Yaqeen button to see the result.",
     popupNote: "This window opens from the Yaqeen icon in the browser toolbar.",
     popupLabel: "Paste an ayah or hadith to verify",
@@ -166,9 +126,9 @@ let lang: Lang = (() => {
   return navigator.language.toLowerCase().startsWith("ar") ? "ar" : "en";
 })();
 
-type View = "try" | "media" | "post" | "popup" | "settings" | "types";
+type View = "try" | "post" | "popup" | "settings" | "types";
 const viewFromHash = (): View =>
-  (["try", "media", "post", "popup", "settings", "types"] as const).find((v) => v === location.hash.slice(1)) ?? "try";
+  (["try", "post", "popup", "settings", "types"] as const).find((v) => v === location.hash.slice(1)) ?? "try";
 let view: View = viewFromHash();
 addEventListener("hashchange", () => {
   if (viewFromHash() === view) return;
@@ -268,8 +228,6 @@ function render() {
   document.querySelector(".tab[aria-current]")?.scrollIntoView({ block: "nearest", inline: "nearest" });
   bindForm("form", "q", "out");
   bindForm("pform", "pq", "pout");
-  bindForm("mform", "mq", "mout");
-  bindMedia();
   document.querySelectorAll<HTMLElement>(".post").forEach(bindPost);
   void loadIndexes().then(() => {
     const a = document.getElementById("nAyat"), h = document.getElementById("nHadith");
@@ -281,35 +239,6 @@ function render() {
 
 function viewHtml(x: (typeof TEXT)[Lang]): string {
   switch (view) {
-    case "media":
-      return `<div class="grid">
-        <section class="panel">
-          <h2>${esc(x.mediaTitle)}</h2>
-          <p class="muted">${esc(x.mediaNote)}</p>
-          <fieldset class="seg">
-            <legend>${esc(x.contentLang)}</legend>
-            ${(["ar", "en"] as const).map((l) => `<label><input type="radio" name="clang" value="${l}"${l === contentLang ? " checked" : ""}><span>${esc(x.contentLangs[l])}</span></label>`).join("")}
-          </fieldset>
-          <label class="drop" id="drop">
-            <input type="file" id="file" accept="image/*,video/*,audio/*" hidden>
-            <span class="btn btn--primary">${esc(x.pick)}</span>
-            <span class="muted">${esc(x.drop)}</span>
-          </label>
-          <button class="btn btn--secondary" id="sample" type="button">${esc(x.sample)}</button>
-          <p class="muted">${esc(x.tiktokNote)}</p>
-          <div id="preview" class="preview"></div>
-        </section>
-        <section class="panel" id="mpanel" hidden>
-          <ol class="steps" id="steps"></ol>
-          <form class="form" id="mform" hidden>
-            <label for="mq">${esc(x.found)}</label>
-            <textarea id="mq" dir="auto"></textarea>
-            <p class="muted" id="asrnote" hidden>${esc(x.asrNote)}</p>
-            <button class="btn btn--primary" type="submit">${esc(x.recheck)}</button>
-          </form>
-          <div id="mout" aria-live="polite"></div>
-        </section>
-      </div>`;
     case "post":
       return `<p class="muted">${esc(x.postNote)}</p>
         <article class="post post--x" data-i="1">
@@ -376,123 +305,6 @@ function viewHtml(x: (typeof TEXT)[Lang]): string {
           ).join("")}
         </div>
       </div>`;
-  }
-}
-
-/** The language of the uploaded content; it decides which reading model is used. */
-let contentLang: media.ContentLang = "ar";
-
-function bindMedia() {
-  const input = document.getElementById("file") as HTMLInputElement | null;
-  if (!input) return;
-  document.querySelectorAll<HTMLInputElement>('input[name="clang"]').forEach((r) =>
-    r.addEventListener("change", () => (contentLang = r.value as media.ContentLang)),
-  );
-  const drop = document.getElementById("drop")!;
-  input.addEventListener("change", () => input.files?.[0] && void handleFile(input.files[0]));
-  drop.addEventListener("dragover", (e) => (e.preventDefault(), drop.classList.add("drop--over")));
-  drop.addEventListener("dragleave", () => drop.classList.remove("drop--over"));
-  drop.addEventListener("drop", (e) => {
-    e.preventDefault();
-    drop.classList.remove("drop--over");
-    const f = e.dataTransfer?.files[0];
-    if (f) void handleFile(f);
-  });
-  document.getElementById("sample")!.addEventListener("click", () => void sampleImage().then(handleFile));
-}
-
-/** A post-style image with a misquoted verse, drawn here so the demo needs no outside picture. */
-async function sampleImage(): Promise<File> {
-  await document.fonts.load("600 34px Cairo");
-  const c = document.createElement("canvas");
-  c.width = 1080;
-  c.height = 600;
-  const g = c.getContext("2d")!;
-  g.fillStyle = "#FFFFFF";
-  g.fillRect(0, 0, c.width, c.height);
-  g.fillStyle = "#0F1419";
-  g.direction = "rtl";
-  g.textAlign = "right";
-  g.font = "600 40px Cairo, sans-serif";
-  const words = TEXT[lang].sampleText.split(" ");
-  const lines: string[] = [];
-  let line = "";
-  for (const w of words) {
-    const next = line ? `${line} ${w}` : w;
-    if (g.measureText(next).width > 940 && line) (lines.push(line), (line = w));
-    else line = next;
-  }
-  lines.push(line);
-  lines.forEach((l, i) => g.fillText(l, 1020, 200 + i * 80));
-  const blob = await new Promise<Blob>((ok) => c.toBlob((b) => ok(b!), "image/png"));
-  return new File([blob], "sample.png", { type: "image/png" });
-}
-
-/** The run's technical log, folded away, for when something goes wrong. */
-function details(): string {
-  return `<details class="diag"><summary>${esc(TEXT[lang].details)}</summary><pre dir="ltr">${esc(media.diag.join("\n"))}</pre></details>`;
-}
-
-async function handleFile(file: File) {
-  const x = TEXT[lang];
-  const panel = document.getElementById("mpanel")!;
-  const steps = document.getElementById("steps")!;
-  const form = document.getElementById("mform")!;
-  const box = document.getElementById("mq") as HTMLTextAreaElement;
-  const out = document.getElementById("mout")!;
-  const preview = document.getElementById("preview")!;
-  const url = URL.createObjectURL(file);
-  const isImage = file.type.startsWith("image/");
-  preview.innerHTML = isImage ? `<img src="${url}" alt="">` : file.type.startsWith("video/") ? `<video src="${url}" controls muted playsinline></video>` : `<audio src="${url}" controls></audio>`;
-  panel.hidden = false;
-  form.hidden = true;
-  out.innerHTML = "";
-  steps.innerHTML = "";
-  const shown = new Map<string, HTMLLIElement>();
-  const step: Progress = (k, pct) => {
-    let li = shown.get(k);
-    if (!li) {
-      shown.forEach((el) => el.classList.add("done"));
-      li = document.createElement("li");
-      shown.set(k, li);
-      steps.append(li);
-    }
-    li.textContent = x.steps[k] + (pct != null && k === "model" ? ` ${pct}%` : "");
-  };
-  try {
-    media.diag.length = 0;
-    media.diag.push(`content language: ${contentLang}`, `file: ${file.type || "unknown type"}, ${(file.size / 1e6).toFixed(1)} MB`, `browser: ${navigator.userAgent.match(/(Edg|Chrome|Firefox|Version)\/[\d.]+/g)?.join(" ") ?? navigator.userAgent}`, `threads: ${crossOriginIsolated ? navigator.hardwareConcurrency : 1}`);
-    let text = "";
-    let speechFailed = false;
-    if (isImage) {
-      step("ocr");
-      text = await media.readImage(file, contentLang);
-    } else {
-      // The text shown in the video is read first: it is quick and needs no download, so a
-      // result appears even when the speech model cannot run on this device.
-      const screen = file.type.startsWith("video/") ? await media.readFrames(file, contentLang, step) : "";
-      // Either part can fail on its own (no audio track, model download blocked); keep what works.
-      const speech = media.canListen().ok
-        ? await media.listen(file, contentLang, step).catch((e) => (console.error(e), media.diag.push(`speech: failed (${e})`), (speechFailed = true), ""))
-        : ((media.diag.push(`speech: not attempted (${media.canListen().why})`), (speechFailed = !screen)), "");
-      text = [screen, speech].filter(Boolean).join("\n");
-      document.getElementById("asrnote")!.hidden = !speech;
-    }
-    shown.forEach((el) => el.classList.add("done"));
-    if (!text) {
-      out.innerHTML = `<p class="note">${esc(speechFailed ? x.speechError : x.noText)}</p>${details()}`;
-      return;
-    }
-    box.value = text;
-    form.hidden = false;
-    out.innerHTML = `<p class="field__value">${esc(t(lang).checking)}</p>`;
-    out.innerHTML = (await check(text, true).then(resultHtml, () => `<p class="note">${esc(t(lang).error)}</p>`)) + details();
-    bindCopy(out);
-  } catch (e) {
-    console.error(e);
-    media.diag.push(`error: ${e}`);
-    shown.forEach((el) => el.classList.add("done"));
-    out.innerHTML = `<p class="note">${esc(x.mediaError)}</p>${details()}`;
   }
 }
 

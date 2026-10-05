@@ -7,9 +7,3 @@
 [functions]
   directory = "netlify/functions"
 
-# Lets the speech-to-text model use several CPU threads (needs cross-origin isolation).
-[[headers]]
-  for = "/*"
-  [headers.values]
-    Cross-Origin-Opener-Policy = "same-origin"
-    Cross-Origin-Embedder-Policy = "credentialless"
