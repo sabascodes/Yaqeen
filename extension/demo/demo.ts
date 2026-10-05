@@ -11,6 +11,7 @@ import { dorarQuery, dorarResultHtml, parseDorarHtml } from "../src/sources/dora
 import { t, type Lang } from "../src/shared/i18n";
 import { bindCopy, badgeHtml, cardHtml, esc, TYPE } from "../src/ui/card";
 import { CHIP_MARK, markSvg } from "../src/ui/logo";
+import type { OcrLang } from "../src/shared/ocr";
 
 const TEXT = {
   ar: {
@@ -30,9 +31,22 @@ const TEXT = {
     loading: "جارٍ تحميل بيانات المصادر…",
     loadError: "تعذر تحميل بيانات المصادر.",
     sources: "المصادر: موسوعة القرآن الكريم quranenc.com · موسوعة الأحاديث النبوية hadeethenc.com · الدرر السنية dorar.net",
-    demoNote: "نسخة العرض لا تشمل المطابقة بالمعنى، وهي متاحة في الإضافة.",
+    demoNote: "نسخة العرض لا تشمل المطابقة بالمعنى، وهي متاحة في الإضافة. قراءة الصور تتم داخل متصفحك.",
+    picTitle: "تحقّق من صورة",
+    picNote: "ارفع لقطة شاشة أو صورة منشور فيها آية أو حديث. يقرأ يقين النص المكتوب في الصورة، حتى بالخطوط المزخرفة، ثم يتحقق منه. تتم القراءة داخل متصفحك ولا تُرفع الصورة إلى أي خادم.",
+    contentLang: "ما لغة النص في الصورة؟",
+    contentLangs: { ar: "العربية", en: "الإنجليزية" },
+    pick: "اختر صورة",
+    drop: "أو اسحب الصورة وأفلتها هنا",
+    reading: "جارٍ قراءة النص في الصورة… (أول مرة تستغرق وقتًا أطول لتحميل نموذج القراءة)",
+    found: "النص الذي وجدناه (راجعه وصحّحه إن لزم، ثم أعد التحقق)",
+    recheck: "تحقق من النص",
+    ocrNote: "القراءة الآلية للصور قد تخطئ في بعض الحروف، خاصة في الخطوط الشديدة الزخرفة. راجع النص قبل الاعتماد على النتيجة.",
+    noText: "لم نجد نصًا مقروءًا في هذه الصورة. جرّب صورة أوضح، أو اكتب النص بنفسك في «جرّب بنفسك».",
+    picError: "تعذرت قراءة هذا الملف. جرّب صورة JPG أو PNG.",
+    notPicture: "هذه النسخة تقرأ الصور فقط.",
     other: "English",
-    tabs: { try: "جرّب بنفسك", post: "على منشور", popup: "النافذة المنبثقة", settings: "الإعدادات" },
+    tabs: { try: "جرّب بنفسك", picture: "صورة", post: "على منشور", popup: "النافذة المنبثقة", settings: "الإعدادات" },
     postNote: "صورة توضيحية لمنشور على X كما يظهر في الهاتف. الزر الوحيد الذي يعمل هو زر يقين تحت المنشور.",
     postBar: "منشور",
     popupNote: "هذه النافذة تفتح من أيقونة يقين في شريط المتصفح.",
@@ -78,9 +92,22 @@ const TEXT = {
     loading: "Loading source data…",
     loadError: "Could not load the source data.",
     sources: "Sources: QuranEnc quranenc.com · HadeethEnc hadeethenc.com · Dorar dorar.net",
-    demoNote: "This demo leaves out meaning-based matching, which is in the extension.",
+    demoNote: "This demo leaves out meaning-based matching, which is in the extension. Pictures are read inside your browser.",
+    picTitle: "Check a picture",
+    picNote: "Upload a screenshot or a post picture with an ayah or hadith. Yaqeen reads the text in it, decorative fonts included, then checks it. Reading happens in your browser; the picture is never uploaded.",
+    contentLang: "What language is the text in the picture?",
+    contentLangs: { ar: "Arabic", en: "English" },
+    pick: "Choose a picture",
+    drop: "or drag and drop it here",
+    reading: "Reading the text in the picture… (the first time takes longer while the reading model loads)",
+    found: "The text we found (review and correct it if needed, then check again)",
+    recheck: "Check this text",
+    ocrNote: "Automatic reading can get some letters wrong, especially in very decorative fonts. Review the text before relying on the result.",
+    noText: "We found no readable text in this picture. Try a clearer one, or type the text yourself under \"Try it\".",
+    picError: "This file could not be read. Try a JPG or PNG picture.",
+    notPicture: "This demo reads pictures only.",
     other: "العربية",
-    tabs: { try: "Try it", post: "On a post", popup: "Popup", settings: "Settings" },
+    tabs: { try: "Try it", picture: "Picture", post: "On a post", popup: "Popup", settings: "Settings" },
     postNote: "An illustration of a post on X as it appears on a phone. The only working button is the Yaqeen button under the post.",
     postBar: "Post",
     popupNote: "This window opens from the Yaqeen icon in the browser toolbar.",
@@ -128,9 +155,9 @@ let lang: Lang = (() => {
   return navigator.language.toLowerCase().startsWith("ar") ? "ar" : "en";
 })();
 
-type View = "try" | "post" | "popup" | "settings";
+type View = "try" | "picture" | "post" | "popup" | "settings";
 const viewFromHash = (): View =>
-  (["try", "post", "popup", "settings"] as const).find((v) => v === location.hash.slice(1)) ?? "try";
+  (["try", "picture", "post", "popup", "settings"] as const).find((v) => v === location.hash.slice(1)) ?? "try";
 let view: View = viewFromHash();
 addEventListener("hashchange", () => {
   if (viewFromHash() === view) return;
@@ -176,7 +203,7 @@ function render() {
   document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   const app = document.getElementById("app")!;
   app.setAttribute("lang", lang);
-  const tabs = (["try", "post", "popup"] as const)
+  const tabs = (["try", "picture", "post", "popup"] as const)
     .map((v) => `<a class="tab" href="#${v}" data-view="${v}" ${v === view ? 'aria-current="page"' : ""}>${esc(x.tabs[v])}</a>`)
     .join("");
   app.innerHTML = `
@@ -233,6 +260,8 @@ function render() {
   document.querySelector(".tab[aria-current]")?.scrollIntoView({ block: "nearest", inline: "nearest" });
   bindForm("form", "q", "out");
   bindForm("pform", "pq", "pout");
+  bindForm("mform", "mq", "mout");
+  bindPicture();
   document.querySelectorAll<HTMLElement>(".post").forEach(bindPost);
   void loadIndexes().then(() => {
     const a = document.getElementById("nAyat"), h = document.getElementById("nHadith");
@@ -254,6 +283,33 @@ const ICONS = [
 
 function viewHtml(x: (typeof TEXT)[Lang]): string {
   switch (view) {
+    case "picture":
+      return `<div class="grid">
+        <section class="panel">
+          <h2>${esc(x.picTitle)}</h2>
+          <p class="muted">${esc(x.picNote)}</p>
+          <fieldset class="seg">
+            <legend>${esc(x.contentLang)}</legend>
+            ${(["ar", "en"] as const).map((l) => `<label><input type="radio" name="clang" value="${l}"${l === contentLang ? " checked" : ""}><span>${esc(x.contentLangs[l])}</span></label>`).join("")}
+          </fieldset>
+          <label class="drop" id="drop">
+            <input type="file" id="file" accept="image/*" hidden>
+            <span class="btn btn--primary">${esc(x.pick)}</span>
+            <span class="muted">${esc(x.drop)}</span>
+          </label>
+          <div id="preview" class="preview"></div>
+        </section>
+        <section class="panel" id="mpanel" hidden>
+          <p class="muted" id="mstatus"></p>
+          <form class="form" id="mform" hidden>
+            <label for="mq">${esc(x.found)}</label>
+            <textarea id="mq" dir="auto"></textarea>
+            <p class="muted">${esc(x.ocrNote)}</p>
+            <button class="btn btn--primary" type="submit">${esc(x.recheck)}</button>
+          </form>
+          <div id="mout" aria-live="polite"></div>
+        </section>
+      </div>`;
     case "post":
       return `<p class="muted center">${esc(x.postNote)}</p>
         <div class="phone" aria-label="${esc(x.postNote)}">
@@ -326,6 +382,67 @@ function viewHtml(x: (typeof TEXT)[Lang]): string {
           ).join("")}
         </div>
       </div>`;
+  }
+}
+
+/** The language of the text in the uploaded picture; it is read in that language first. */
+let contentLang: OcrLang = "ar";
+
+function bindPicture() {
+  const input = document.getElementById("file") as HTMLInputElement | null;
+  if (!input) return;
+  document.querySelectorAll<HTMLInputElement>('input[name="clang"]').forEach((r) =>
+    r.addEventListener("change", () => (contentLang = r.value as OcrLang)),
+  );
+  const drop = document.getElementById("drop")!;
+  input.addEventListener("change", () => input.files?.[0] && void handlePicture(input.files[0]));
+  drop.addEventListener("dragover", (e) => (e.preventDefault(), drop.classList.add("drop--over")));
+  drop.addEventListener("dragleave", () => drop.classList.remove("drop--over"));
+  drop.addEventListener("drop", (e) => {
+    e.preventDefault();
+    drop.classList.remove("drop--over");
+    const f = e.dataTransfer?.files[0];
+    if (f) void handlePicture(f);
+  });
+}
+
+async function handlePicture(file: File) {
+  const x = TEXT[lang];
+  const panel = document.getElementById("mpanel")!;
+  const status = document.getElementById("mstatus")!;
+  const form = document.getElementById("mform")!;
+  const box = document.getElementById("mq") as HTMLTextAreaElement;
+  const out = document.getElementById("mout")!;
+  const preview = document.getElementById("preview")!;
+  panel.hidden = false;
+  form.hidden = true;
+  out.innerHTML = "";
+  if (!file.type.startsWith("image/")) {
+    preview.innerHTML = "";
+    status.textContent = x.notPicture;
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  preview.innerHTML = `<img src="${url}" alt="">`;
+  status.textContent = x.reading;
+  try {
+    const { readPicture } = await import("./picture");
+    const { text } = await readPicture(file, contentLang);
+    status.textContent = "";
+    if (!text) {
+      out.innerHTML = `<p class="note">${esc(x.noText)}</p>`;
+      return;
+    }
+    box.value = text;
+    form.hidden = false;
+    out.innerHTML = `<p class="field__value">${esc(t(lang).checking)}</p>`;
+    // Lines in a picture are usually one quote wrapped to fit, so they are checked as one text.
+    out.innerHTML = await check(text.replace(/\s*\n\s*/g, " "), true).then(resultHtml, () => `<p class="note">${esc(t(lang).error)}</p>`);
+    bindCopy(out);
+  } catch (e) {
+    console.error(e);
+    status.textContent = "";
+    out.innerHTML = `<p class="note">${esc(x.picError)}</p>`;
   }
 }
 
