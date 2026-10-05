@@ -16,7 +16,7 @@ const TEXT = {
   ar: {
     title: "يقين",
     eyebrow: "إضافة لمتصفحي Chrome وEdge",
-    headline: "تحقّق من الآيات والأحاديث قبل أن تشاركها",
+    headline: "تحقق من الآيات والأحاديث من المصادر المعتمدة",
     label: "الصق آية أو حديثًا",
     tagline: "يطابق يقين النص مع المصادر المعتمدة فقط، ويعرض المرجع واللفظ الصحيح وأحكام العلماء كما وردت، دون أي فتوى.",
     tryIt: "جرّب بنفسك",
@@ -64,7 +64,7 @@ const TEXT = {
   en: {
     title: "Yaqeen",
     eyebrow: "An extension for Chrome and Edge",
-    headline: "Check verses and hadith before you share them",
+    headline: "Verify Quranic verses and hadiths using trusted sources",
     label: "Paste an ayah or hadith",
     tagline: "Yaqeen matches the text against approved sources only, and shows the reference, the correct wording and the scholars' rulings as stated, with no fatwa.",
     tryIt: "Try it",
