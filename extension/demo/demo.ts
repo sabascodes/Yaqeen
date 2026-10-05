@@ -10,11 +10,15 @@ import type { Ayah, EncHadith } from "../src/core/types";
 import { dorarQuery, dorarResultHtml, parseDorarHtml } from "../src/sources/dorar";
 import { t, type Lang } from "../src/shared/i18n";
 import { bindCopy, badgeHtml, cardHtml, esc } from "../src/ui/card";
+import { markSvg } from "../src/ui/logo";
 
 const TEXT = {
   ar: {
     title: "يقين",
-    tagline: "تحقق من الآيات والأحاديث في المنشورات بمطابقتها مع المصادر المعتمدة فقط.",
+    eyebrow: "إضافة لمتصفحي Chrome وEdge",
+    headline: "تحقّق من الآيات والأحاديث قبل أن تشاركها",
+    label: "الصق آية أو حديثًا",
+    tagline: "يطابق يقين النص مع المصادر المعتمدة فقط، ويعرض المرجع واللفظ الصحيح وأحكام العلماء كما وردت، دون أي فتوى.",
     tryIt: "جرّب بنفسك",
     placeholder: "الصق آية أو حديثًا للتحقق منه…",
     go: "تحقق",
@@ -31,7 +35,10 @@ const TEXT = {
   },
   en: {
     title: "Yaqeen",
-    tagline: "Check Quran verses and hadith in posts against approved sources only.",
+    eyebrow: "An extension for Chrome and Edge",
+    headline: "Check verses and hadith before you share them",
+    label: "Paste an ayah or hadith",
+    tagline: "Yaqeen matches the text against approved sources only, and shows the reference, the correct wording and the scholars' rulings as stated, with no fatwa.",
     tryIt: "Try it",
     placeholder: "Paste an ayah or hadith to verify…",
     go: "Verify",
@@ -98,33 +105,48 @@ function render() {
   const app = document.getElementById("app")!;
   app.setAttribute("lang", lang);
   app.innerHTML = `
-    <header class="top">
-      <span class="logo"><span class="logo__mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.8 12.2l2.2 2.2 4.4-4.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span>${esc(x.title)}</span>
-      <button class="btn" id="lang">${esc(x.other)}</button>
-    </header>
-    <p class="tagline">${esc(x.tagline)}</p>
-    <p id="status" class="muted" hidden></p>
-    <section class="panel">
-      <h2>${esc(x.tryIt)}</h2>
-      <form class="row" id="form"><textarea id="q" placeholder="${esc(x.placeholder)}"></textarea><button class="btn btn--primary" type="submit">${esc(x.go)}</button></form>
-      <div id="out" aria-live="polite"></div>
-    </section>
-    <section class="panel">
-      <h2>${esc(x.feed)}</h2>
-      <p class="muted">${esc(x.feedNote)}</p>
-      ${SAMPLES.map(
-        (s, i) => `
-        <article class="post" data-i="${i}">
-          <div class="post__user"><span class="avatar">${esc(s.user[0])}</span><b>${esc(s.user)}</b></div>
-          <p class="post__text" dir="auto">${esc(s.text)}</p>
-          <div class="post__yq"><button class="btn post__check">${esc(x.check)}</button><div class="post__badges"></div></div>
-          <div class="post__cards"></div>
-        </article>`,
-      ).join("")}
-    </section>
-    <p class="muted foot">${esc(x.demoNote)}</p>
-    <p class="muted foot">${esc(x.sources)}</p>
-    <p class="muted foot">${esc(t(lang).disclaimer)}</p>`;
+    <header class="topbar"><div class="wrap">
+      <span class="logo">${markSvg(40)}${esc(x.title)}</span>
+      <button class="btn btn--secondary" id="lang">${esc(x.other)}</button>
+    </div></header>
+    <section class="hero"><div class="wrap">
+      <div class="hero__text">
+        <p class="eyebrow">${esc(x.eyebrow)}</p>
+        <h1>${esc(x.headline)}</h1>
+        <p class="tagline">${esc(x.tagline)}</p>
+      </div>
+      ${markSvg(180, { faded: true })}
+    </div></section>
+    <main class="wrap grid">
+      <section class="panel">
+        <h2>${esc(x.tryIt)}</h2>
+        <p id="status" class="muted" hidden></p>
+        <form class="form" id="form">
+          <label for="q">${esc(x.label)}</label>
+          <textarea id="q" placeholder="${esc(x.placeholder)}"></textarea>
+          <button class="btn btn--primary" type="submit">${esc(x.go)}</button>
+        </form>
+        <div id="out" aria-live="polite"></div>
+      </section>
+      <div class="col">
+        <h2>${esc(x.feed)}</h2>
+        <p class="muted">${esc(x.feedNote)}</p>
+        ${SAMPLES.map(
+          (s, i) => `
+          <article class="post" data-i="${i}">
+            <div class="post__user"><span class="avatar">${esc(s.user[0])}</span><b>${esc(s.user)}</b></div>
+            <p class="post__text" dir="auto">${esc(s.text)}</p>
+            <div class="post__yq"><button class="btn post__check">${esc(x.check)}</button><div class="post__badges"></div></div>
+            <div class="post__cards"></div>
+          </article>`,
+        ).join("")}
+      </div>
+    </main>
+    <footer class="footer"><div class="wrap">
+      <p class="muted">${esc(x.sources)}</p>
+      <p class="muted">${esc(x.demoNote)}</p>
+      <p class="muted">${esc(t(lang).disclaimer)}</p>
+    </div></footer>`;
 
   document.getElementById("lang")!.addEventListener("click", () => {
     lang = lang === "ar" ? "en" : "ar";

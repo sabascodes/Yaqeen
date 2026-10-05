@@ -1,3 +1,4 @@
+import { markSvg } from "../ui/logo";
 import type { DataStatus } from "../shared/messages";
 import { loadSettings, resolveLang, saveSettings, type Settings } from "../shared/settings";
 import { esc } from "../ui/card";
@@ -129,7 +130,7 @@ async function render() {
   document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   app.setAttribute("lang", lang);
   app.innerHTML = `
-    <h1>${esc(x.title)}</h1>
+    <header class="head">${markSvg(44)}<h1>${esc(x.title)}</h1></header>
     <section><p>${esc(x.about)}</p></section>
     <section id="data"></section>
     <section>

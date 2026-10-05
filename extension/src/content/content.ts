@@ -3,6 +3,7 @@
  * to check them, and shows the verdict next to the post in a shadow root so the
  * site's styles cannot interfere.
  */
+import { CHIP_MARK } from "../ui/logo";
 import css from "../ui/card.css";
 import { bindCopy, badgeHtml, cardHtml, esc } from "../ui/card";
 import { currentPlatform, type Platform } from "./platforms";
@@ -19,7 +20,7 @@ function send(msg: unknown): Promise<CheckResponse> {
   return chrome.runtime.sendMessage(msg) as Promise<CheckResponse>;
 }
 
-const LOGO = `<svg class="yq-logo" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M8.8 12.2l2.2 2.2 4.4-4.6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const LOGO = CHIP_MARK;
 
 /** Creates the widget container right after the post's text. */
 function mount(anchor: Element): ShadowRoot {

@@ -7,24 +7,27 @@
 <link rel="stylesheet" href="ui.css">
 <style>
   body { margin:0; background:var(--bg); width:400px }
-  .popup { padding:16px; display:flex; flex-direction:column; gap:12px }
+  .popup { padding:18px; display:flex; flex-direction:column; gap:14px }
   .popup__head { display:flex; justify-content:space-between; align-items:center }
-  .logo { display:inline-flex; align-items:center; gap:10px; font-weight:700; font-size:20px; color:var(--brand) }
-  .logo__mark { width:32px; height:32px; border-radius:10px; background:var(--brand); display:grid; place-items:center }
-  .row { display:flex; gap:8px }
-  textarea { flex:1; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:8px 10px; font:inherit; resize:vertical; min-height:60px }
+  .logo { display:inline-flex; align-items:center; gap:10px; font-weight:800; font-size:22px; color:var(--brand) }
+  .form { display:flex; flex-direction:column; gap:8px }
+  .form label { font-size:13px; color:var(--muted) }
+  textarea { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:10px 12px; font:inherit; font-size:15px; resize:vertical; min-height:76px }
+  textarea:focus { outline:2px solid var(--brand); outline-offset:1px }
+  .form .btn { height:44px; font-size:15px }
+  #out { display:flex; flex-direction:column; gap:12px }
   .foot { font-size:12px; color:var(--muted); text-align:center }
-  a.settings { color:var(--brand); font-size:12px }
+  a.settings { color:var(--brand); font-size:13px; font-weight:600; text-decoration:none; padding:8px 4px }
 </style>
 </head>
 <body>
 <main class="yq popup" id="app">
   <div class="popup__head">
-    <span class="logo"><span class="logo__mark"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.5-3 8.2-7 10-4-1.8-7-5.5-7-10V6l7-3z" stroke="#fff" stroke-width="1.8" stroke-linejoin="round"/><path d="M8.8 12.2l2.2 2.2 4.4-4.6" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></span><span id="logo"></span></span>
+    <span class="logo"><svg class="yq-mark" width="36" height="36" viewBox="0 0 64 64" fill="none" aria-hidden="true"><rect x="12" y="12" width="40" height="40" rx="6" fill="#0F5B4A"/><rect x="12" y="12" width="40" height="40" rx="6" fill="#0F5B4A" transform="rotate(45 32 32)"/><circle cx="32" cy="32" r="15.5" stroke="#B8903A" stroke-width="2"/><path d="M24.5 32.5l5 5 10-11" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg><span id="logo"></span></span>
     <a class="settings" href="options.html" target="_blank" id="settings"></a>
   </div>
   <p id="nodata" class="note" hidden></p>
-  <form class="row" id="form"><textarea id="q"></textarea><button class="btn btn--primary" id="go" type="submit"></button></form>
+  <form class="form" id="form"><label for="q" id="qlabel"></label><textarea id="q"></textarea><button class="btn btn--primary" id="go" type="submit"></button></form>
   <div id="out" aria-live="polite"></div>
   <p class="foot" id="foot"></p>
 </main>

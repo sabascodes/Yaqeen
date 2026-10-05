@@ -4,8 +4,8 @@ import { t } from "../shared/i18n";
 import { bindCopy, cardHtml, esc } from "../ui/card";
 
 const TEXT = {
-  ar: { placeholder: "الصق نصًا للتحقق منه…", go: "تحقق", settings: "الإعدادات", foot: "نعتمد على المصادر المعتمدة فقط · لا نصدر فتاوى", nothing: "لم نجد في النص آية أو حديثًا للتحقق منه." },
-  en: { placeholder: "Paste a text to verify…", go: "Verify", settings: "Settings", foot: "Approved sources only · No rulings issued", nothing: "No ayah or hadith was found in this text to verify." },
+  ar: { placeholder: "الصق نصًا للتحقق منه…", label: "الصق آية أو حديثًا للتحقق منه", go: "تحقق", settings: "الإعدادات", foot: "نعتمد على المصادر المعتمدة فقط · لا نصدر فتاوى", nothing: "لم نجد في النص آية أو حديثًا للتحقق منه." },
+  en: { placeholder: "Paste a text to verify…", label: "Paste an ayah or hadith to verify", go: "Verify", settings: "Settings", foot: "Approved sources only · No rulings issued", nothing: "No ayah or hadith was found in this text to verify." },
 };
 
 async function main() {
@@ -18,6 +18,7 @@ async function main() {
   document.getElementById("settings")!.textContent = x.settings;
   document.getElementById("foot")!.textContent = x.foot;
   document.getElementById("go")!.textContent = x.go;
+  document.getElementById("qlabel")!.textContent = x.label;
   (document.getElementById("q") as HTMLTextAreaElement).placeholder = x.placeholder;
 
   const st = (await chrome.runtime.sendMessage({ type: "status" })) as DataStatus;

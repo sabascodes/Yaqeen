@@ -17,6 +17,7 @@ await build({
   logLevel: "info",
 });
 cpSync("demo/index.html", join(out, "index.html"));
+cpSync("demo/favicon.png", join(out, "favicon.png"));
 cpSync("src/ui/card.css", join(out, "ui.css"));
 for (const f of ["quran.json", "hadeethenc.json"]) {
   // Source data from backend/data (made by fetch_quran.py and build_hadith.py).

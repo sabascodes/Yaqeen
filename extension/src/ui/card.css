@@ -32,7 +32,8 @@
 [data-type="differed"] .badge, .badge[data-type="differed"] { background:var(--differed-bg); color:var(--differed-fg) }
 [data-type="notfound"] .badge, .badge[data-type="notfound"] { background:var(--notfound-bg); color:var(--notfound-fg) }
 .card { width:100%; max-width:380px; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px;
-  display:flex; flex-direction:column; gap:14px; box-shadow:0 4px 16px rgba(26,30,26,.08); text-align:start }
+  display:flex; flex-direction:column; gap:14px; box-shadow:0 4px 16px rgba(26,30,26,.08); text-align:start;
+  border-top:5px solid var(--c, var(--brand)) }
 .card__head { display:flex; justify-content:space-between; align-items:center; gap:8px }
 .field { display:flex; flex-direction:column; gap:6px }
 .field__label { font-size:12px; color:var(--muted) }
@@ -56,4 +57,5 @@
 .yq-row { display:flex; gap:6px; flex-wrap:wrap }
 .yq-chip { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; border:1px solid var(--border);
   background:var(--surface); color:var(--brand); font:600 12px/20px var(--font-ar); cursor:pointer }
-.yq-logo { width:14px; height:14px }
+.yq-logo { width:16px; height:16px }
+.yq-mark { flex:none; display:block }
