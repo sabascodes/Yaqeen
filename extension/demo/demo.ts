@@ -48,6 +48,7 @@ const TEXT = {
     recheck: "تحقق من النص",
     noText: "لم نجد نصًا مقروءًا في هذا الملف. جرّب صورة أوضح أو فيديو فيه كلام واضح.",
     mediaError: "تعذرت قراءة هذا الملف. جرّب صورة JPG أو PNG، أو فيديو MP4.",
+    details: "تفاصيل تقنية (أرسلها لنا إن استمرت المشكلة)",
     speechError: "تعذر تشغيل تحويل الكلام إلى نص على هذا الجهاز. جرّب متصفح Chrome أو Edge على جهاز كمبيوتر.",
     asrNote: "تحويل الكلام إلى نص آلي وقد يخطئ، خاصة في التلاوة. راجع النص قبل الاعتماد على النتيجة.",
     tiktokNote: "لفيديو TikTok: احفظ الفيديو على جهازك أولًا ثم ارفعه هنا.",
@@ -111,6 +112,7 @@ const TEXT = {
     recheck: "Check this text",
     noText: "We found no readable text in this file. Try a clearer image, or a video with clear speech.",
     mediaError: "This file could not be read. Try a JPG or PNG image, or an MP4 video.",
+    details: "Technical details (send these to us if the problem continues)",
     speechError: "Speech-to-text could not run on this device. Try Chrome or Edge on a computer.",
     asrNote: "Speech-to-text is automatic and can make mistakes, especially with recitation. Review the text before relying on the result.",
     tiktokNote: "For a TikTok video: save it to your device first, then upload it here.",
@@ -412,6 +414,11 @@ async function sampleImage(): Promise<File> {
   return new File([blob], "sample.png", { type: "image/png" });
 }
 
+/** The run's technical log, folded away, for when something goes wrong. */
+function details(): string {
+  return `<details class="diag"><summary>${esc(TEXT[lang].details)}</summary><pre dir="ltr">${esc(media.diag.join("\n"))}</pre></details>`;
+}
+
 async function handleFile(file: File) {
   const x = TEXT[lang];
   const panel = document.getElementById("mpanel")!;
@@ -439,6 +446,8 @@ async function handleFile(file: File) {
     li.textContent = x.steps[k] + (pct != null && k === "model" ? ` ${pct}%` : "");
   };
   try {
+    media.diag.length = 0;
+    media.diag.push(`file: ${file.type || "unknown type"}, ${(file.size / 1e6).toFixed(1)} MB`, `browser: ${navigator.userAgent.match(/(Edg|Chrome|Firefox|Version)\/[\d.]+/g)?.join(" ") ?? navigator.userAgent}`, `threads: ${crossOriginIsolated ? navigator.hardwareConcurrency : 1}`);
     let text = "";
     let speechFailed = false;
     if (isImage) {
@@ -446,25 +455,26 @@ async function handleFile(file: File) {
       text = await media.readImage(file);
     } else {
       // Either part can fail on its own (no audio track, model download blocked); keep what works.
-      const speech = await media.listen(file, step).catch((e) => (console.error(e), (speechFailed = true), ""));
+      const speech = await media.listen(file, step).catch((e) => (console.error(e), media.diag.push(`speech: failed (${e})`), (speechFailed = true), ""));
       const screen = file.type.startsWith("video/") ? await media.readFrames(file, step) : "";
       text = [speech, screen].filter(Boolean).join("\n");
       document.getElementById("asrnote")!.hidden = !speech;
     }
     shown.forEach((el) => el.classList.add("done"));
     if (!text) {
-      out.innerHTML = `<p class="note">${esc(speechFailed ? x.speechError : x.noText)}</p>`;
+      out.innerHTML = `<p class="note">${esc(speechFailed ? x.speechError : x.noText)}</p>${details()}`;
       return;
     }
     box.value = text;
     form.hidden = false;
     out.innerHTML = `<p class="field__value">${esc(t(lang).checking)}</p>`;
-    out.innerHTML = await check(text, true).then(resultHtml, () => `<p class="note">${esc(t(lang).error)}</p>`);
+    out.innerHTML = (await check(text, true).then(resultHtml, () => `<p class="note">${esc(t(lang).error)}</p>`)) + details();
     bindCopy(out);
   } catch (e) {
     console.error(e);
+    media.diag.push(`error: ${e}`);
     shown.forEach((el) => el.classList.add("done"));
-    out.innerHTML = `<p class="note">${esc(x.mediaError)}</p>`;
+    out.innerHTML = `<p class="note">${esc(x.mediaError)}</p>${details()}`;
   }
 }
 
