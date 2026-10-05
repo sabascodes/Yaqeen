@@ -2,8 +2,9 @@
 
 Yaqeen reads the text in pictures on the user's device with Tesseract (tesseract.js). The
 standard Arabic and English models misread the decorative fonts and coloured backgrounds common in
-social media pictures, so Yaqeen ships its own models in `extension/ocr-models/`: Tesseract's
-`tessdata_best` Arabic and English models, fine-tuned on Quran, hadith and Quran-translation text
+social media pictures, so Yaqeen ships its own model in `extension/ocr-models/`. Pictures are read in Arabic only (the
+approved sources are Arabic); the English scripts here are kept but unused. The goal is Tesseract's
+`tessdata_best` Arabic model fine-tuned on Quran, hadith and Quran-translation text
 drawn in plain and decorative fonts the way posts show them.
 
 OCR only extracts text. Matching still uses only the approved sources (QuranEnc, HadeethEnc,
@@ -23,7 +24,8 @@ Dorar), and the user can always correct the text that was read before it is chec
 Twelve Arabic and seven English font families are held out of training, so the scores on them
 show how the models handle fonts they have never seen.
 
-Arabic labels are the letters without harakat (the model learns to ignore tashkeel, which matching
+Arabic box labels are written in visual order (reversed); labels in reading order made
+fine-tuning collapse. Arabic labels are the letters without harakat (the model learns to ignore tashkeel, which matching
 ignores too), and the Arabic comma is labelled as `,` because the base model has no `،`.
 
 ## Running it
