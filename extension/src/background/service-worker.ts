@@ -94,57 +94,81 @@ async function imageToDataUrl(url: string): Promise<string> {
   return `data:${blob.type || "image/png"};base64,${btoa(bin)}`;
 }
 
-// ---------- Semantic search over all ayat ----------
+// ---------- Semantic search (ayat and HadeethEnc hadith) ----------
 
 /**
- * Ayah embeddings from multilingual-e5-base, shipped with the extension as int8 rows
- * (built from backend/data/quran_embeddings.npy). Layout: rows u32, dims u32,
- * one f32 scale per row, then rows*dims i8 values. Rows are in mushaf order.
+ * Embeddings from multilingual-e5-base, shipped with the extension as int8 rows (built from
+ * backend/data/quran_embeddings.npy and hadith_embeddings.npy). Layout: rows u32, dims u32,
+ * one f32 scale per row, then rows*dims i8 values. Quran rows are in mushaf order; hadith
+ * rows follow data/hadith-e5-ids.json.
  */
-interface AyahVectors {
+interface Vectors {
   rows: number;
   dims: number;
   scales: Float32Array;
   data: Int8Array;
 }
-let vectors: Promise<AyahVectors | null> | null = null;
+type Near = { index: number; score: number }[];
+const vectorFiles = new Map<string, Promise<Vectors | null>>();
 
-function loadVectors(): Promise<AyahVectors | null> {
-  vectors ??= fetch(chrome.runtime.getURL("data/quran-e5.bin"))
-    .then((r) => (r.ok ? r.arrayBuffer() : null))
-    .then((buf) => {
-      if (!buf) return null;
-      const [rows, dims] = new Uint32Array(buf, 0, 2) as unknown as [number, number];
-      return {
-        rows,
-        dims,
-        scales: new Float32Array(buf, 8, rows),
-        data: new Int8Array(buf, 8 + rows * 4, rows * dims),
-      };
-    })
-    .catch(() => null);
-  return vectors;
+function loadVectors(file: string): Promise<Vectors | null> {
+  let v = vectorFiles.get(file);
+  if (!v) {
+    v = fetch(chrome.runtime.getURL(file))
+      .then((r) => (r.ok ? r.arrayBuffer() : null))
+      .then((buf) => {
+        if (!buf) return null;
+        const [rows, dims] = new Uint32Array(buf, 0, 2) as unknown as [number, number];
+        return { rows, dims, scales: new Float32Array(buf, 8, rows), data: new Int8Array(buf, 8 + rows * 4, rows * dims) };
+      })
+      .catch(() => null);
+    vectorFiles.set(file, v);
+  }
+  return v;
 }
 
-async function semanticSearch(text: string, k = 10): Promise<{ index: number; score: number }[]> {
-  const v = await loadVectors();
-  // Only usable when the rows line up with the downloaded mushaf text.
-  if (!v || !quran || v.rows !== quran.size) return [];
+let hadithRowIds: Promise<string[] | null> | null = null;
+function loadHadithRowIds(): Promise<string[] | null> {
+  hadithRowIds ??= fetch(chrome.runtime.getURL("data/hadith-e5-ids.json"))
+    .then((r) => (r.ok ? (r.json() as Promise<string[]>) : null))
+    .catch(() => null);
+  return hadithRowIds;
+}
+
+/** Rows most similar to the text; `position` maps a row to the local index (-1 to skip it). */
+async function nearest(v: Vectors, text: string, position: (row: number) => number, k = 10): Promise<Near> {
   const q = await offscreen<number[]>({ target: "offscreen", type: "embed", text });
   if (q.length !== v.dims) return [];
-  const top: { index: number; score: number }[] = [];
+  const top: Near = [];
   for (let r = 0; r < v.rows; r++) {
     let dot = 0;
     const off = r * v.dims;
     for (let d = 0; d < v.dims; d++) dot += v.data[off + d]! * q[d]!;
     const score = dot * v.scales[r]!;
     if (top.length < k || score > top[top.length - 1]!.score) {
-      top.push({ index: r, score });
+      const index = position(r);
+      if (index < 0) continue;
+      top.push({ index, score });
       top.sort((a, b) => b.score - a.score);
       if (top.length > k) top.pop();
     }
   }
   return top;
+}
+
+async function quranSemanticSearch(text: string): Promise<Near> {
+  const v = await loadVectors("data/quran-e5.bin");
+  // Only usable when the rows line up with the downloaded mushaf text.
+  if (!v || !quran || v.rows !== quran.size) return [];
+  return nearest(v, text, (r) => r);
+}
+
+async function hadithSemanticSearch(text: string): Promise<Near> {
+  const [v, ids] = await Promise.all([loadVectors("data/hadith-e5.bin"), loadHadithRowIds()]);
+  if (!v || !ids || ids.length !== v.rows || !hadith) return [];
+  // Matched by HadeethEnc id, since the downloaded set can differ from the one embedded.
+  const index = hadith;
+  return nearest(v, text, (r) => index.positionOf(ids[r]!));
 }
 
 // ---------- Checks ----------
@@ -163,7 +187,8 @@ async function check(text: string, manual = false): Promise<CheckResult> {
     hadith,
     lang: resolveLang(settings.lang),
     dorar: settings.dorarOnline ? (q) => searchDorar(q) : undefined,
-    semanticSearch: settings.semantic && quran ? semanticSearch : undefined,
+    semanticSearch: settings.semantic && quran ? quranSemanticSearch : undefined,
+    hadithSemanticSearch: settings.semantic && hadith ? hadithSemanticSearch : undefined,
   }, manual);
   if (cache.size >= CACHE_MAX) cache.delete(cache.keys().next().value!);
   cache.set(key, result);

@@ -177,6 +177,21 @@ def check_quran(text, index):
 
 
 _index = None
+_model = None
+
+
+def semantic_model():
+    """النموذج نفسه للقرآن والحديث، يُحمَّل مرة واحدة. None إذا كان موقوفًا أو لم تُثبَّت مكتباته."""
+    global _model, SEMANTIC_STATUS
+    if _model is None and EMBED_MODEL.lower() not in ("", "off"):
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError:
+            SEMANTIC_STATUS = "ثبّتي requirements-semantic.txt لتفعيلها"
+        else:
+            _model = SentenceTransformer(EMBED_MODEL)
+            SEMANTIC_STATUS = EMBED_MODEL
+    return _model
 
 
 def load_index():
@@ -186,21 +201,14 @@ def load_index():
         return _index
     ayat = json.loads(QURAN_JSON.read_text(encoding="utf-8"))
     embeddings = embed = None
-    if EMBED_MODEL.lower() in ("", "off"):
-        SEMANTIC_STATUS = "off"
-    elif not EMBEDDINGS.exists():
+    if not EMBEDDINGS.exists():
         SEMANTIC_STATUS = "data/quran_embeddings.npy غير موجود"
     else:
-        try:
+        model = semantic_model()
+        if model is not None:
             import numpy as np
-            from sentence_transformers import SentenceTransformer
-        except ImportError:
-            SEMANTIC_STATUS = "ثبّتي requirements-semantic.txt لتفعيلها"
-        else:
             embeddings = np.load(EMBEDDINGS).astype("float32")
             embeddings /= np.linalg.norm(embeddings, axis=1, keepdims=True)
-            model = SentenceTransformer(EMBED_MODEL)
             embed = lambda t: model.encode(EMBED_QUERY_PREFIX + t, normalize_embeddings=True)
-            SEMANTIC_STATUS = EMBED_MODEL
     _index = QuranIndex(ayat, embeddings, embed)
     return _index

@@ -243,6 +243,35 @@ describe("semantic search", () => {
   });
 });
 
+describe("hadith semantic search", () => {
+  const paraphrase = "قال رسول الله ﷺ: من آمن بالله وبيوم القيامة فلا يتكلم إلا بالخير وإلا فليسكت";
+
+  it("finds a paraphrased HadeethEnc hadith and gives the correct wording, never 'authentic'", async () => {
+    const hadithSemanticSearch = vi.fn(async () => [{ index: 1, score: 0.92 }]);
+    const r = await checkPost(paraphrase, deps({ hadithSemanticSearch }));
+    expect(hadithSemanticSearch).toHaveBeenCalled();
+    expect(r.verdicts[0]).toMatchObject({ kind: "different_wording", source: "hadeethenc", sourceText: ENC[1]!.text });
+  });
+
+  it("does not accept a semantic hit below the threshold", async () => {
+    const hadithSemanticSearch = vi.fn(async () => [{ index: 1, score: 0.85 }]);
+    const r = await checkPost(paraphrase, deps({ hadithSemanticSearch }));
+    expect(r.verdicts.some((v) => v.source === "hadeethenc")).toBe(false);
+  });
+
+  it("does not accept meaning alone without wording in common", async () => {
+    const hadithSemanticSearch = vi.fn(async () => [{ index: 1, score: 0.99 }]);
+    const r = await checkPost("قال رسول الله ﷺ: أحسنوا إلى جيرانكم وأكرموا ضيوفكم دائما", deps({ hadithSemanticSearch }));
+    expect(r.verdicts.some((v) => v.source === "hadeethenc")).toBe(false);
+  });
+
+  it("is not used for posts that do not look like a hadith", async () => {
+    const hadithSemanticSearch = vi.fn(async () => [{ index: 1, score: 0.99 }]);
+    await checkPost("من كان عنده وقت فليقرأ هذا الكتاب الجميل أو ليتركه", deps({ hadithSemanticSearch }));
+    expect(hadithSemanticSearch).not.toHaveBeenCalled();
+  });
+});
+
 describe("source errors", () => {
   it("never reports 'not found' when Dorar could not be reached", async () => {
     const dorar = vi.fn(async () => {

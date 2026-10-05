@@ -44,10 +44,9 @@ for (const lang of ["ara", "eng"]) {
 const ort = join(pkgDir("onnxruntime-web"), "dist");
 for (const f of readdirSync(ort)) if (/^ort-wasm-simd-threaded\.asyncify\.(mjs|wasm)$/.test(f)) cpSync(join(ort, f), join(vendor, "ort", f));
 
-// Ayah embeddings (multilingual-e5-base, 6236 x 768 float32, mushaf order) from backend/data,
-// stored as int8 with one scale per row: about 4.8 MB instead of 19 MB, same ranking in practice.
-const npy = "../backend/data/quran_embeddings.npy";
-if (existsSync(npy)) {
+// Embeddings (multilingual-e5-base, float32, from backend/data) stored as int8 with one scale
+// per row: a quarter of the size, same ranking in practice (checked against the float32 file).
+function packEmbeddings(npy, dest) {
   const buf = readFileSync(npy);
   const headerLen = buf.readUInt16LE(8);
   const header = buf.toString("latin1", 10, 10 + headerLen);
@@ -69,10 +68,25 @@ if (existsSync(npy)) {
     for (let d = 0; d < dims; d++) bin.writeInt8(Math.round(row[d] / norm / scale), 8 + rows * 4 + r * dims + d);
   }
   mkdirSync(join(out, "data"), { recursive: true });
-  writeFileSync(join(out, "data/quran-e5.bin"), bin);
-  console.log(`Ayah embeddings: ${rows} x ${dims}`);
+  writeFileSync(join(out, dest), bin);
+  console.log(`${dest}: ${rows} x ${dims}`);
+  return rows;
+}
+
+const backendData = "../backend/data";
+if (existsSync(join(backendData, "quran_embeddings.npy"))) {
+  packEmbeddings(join(backendData, "quran_embeddings.npy"), "data/quran-e5.bin");
 } else {
-  console.warn(`${npy} not found; semantic search is disabled in this build.`);
+  console.warn("backend/data/quran_embeddings.npy not found; Quran semantic search is off in this build.");
+}
+const hadithIds = join(backendData, "hadith_embeddings_ids.json");
+if (existsSync(join(backendData, "hadith_embeddings.npy")) && existsSync(hadithIds)) {
+  const rows = packEmbeddings(join(backendData, "hadith_embeddings.npy"), "data/hadith-e5.bin");
+  const ids = JSON.parse(readFileSync(hadithIds, "utf8"));
+  if (ids.length !== rows) throw new Error(`${hadithIds} has ${ids.length} ids for ${rows} rows`);
+  writeFileSync(join(out, "data/hadith-e5-ids.json"), JSON.stringify(ids));
+} else {
+  console.warn("backend/data/hadith_embeddings.npy not found (run backend/build_hadith.py); hadith semantic search is off in this build.");
 }
 
 console.log("Built extension in", out);

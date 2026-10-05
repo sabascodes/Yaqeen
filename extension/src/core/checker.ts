@@ -43,6 +43,8 @@ export interface CheckDeps {
    * on-device multilingual-e5-base model and the precomputed ayah embeddings.
    */
   semanticSearch?: (text: string) => Promise<{ index: number; score: number }[]>;
+  /** Same for HadeethEnc hadith (positions in the hadith index), from the precomputed hadith embeddings. */
+  hadithSemanticSearch?: (text: string) => Promise<{ index: number; score: number }[]>;
   lang?: "ar" | "en";
 }
 
@@ -93,11 +95,27 @@ async function checkQuran(f: Fragment, deps: CheckDeps): Promise<Verdict | null>
   };
 }
 
-function checkHadeethEnc(f: Fragment, deps: CheckDeps): Verdict | null {
-  const hit = deps.hadith?.search(stripFraming(f.text));
-  if (!hit || hit.similarity < THRESHOLDS.hadithClose) return null;
+async function checkHadeethEnc(f: Fragment, deps: CheckDeps): Promise<Verdict | null> {
+  if (!deps.hadith) return null;
+  const matn = stripFraming(f.text);
+  let hit = deps.hadith.search(matn);
+  let sim = hit?.similarity ?? 0;
+  // Meaning-based search only for text framed as a hadith; the result is never "authentic".
+  if (sim < THRESHOLDS.hadithClose && f.hadithLike && deps.hadithSemanticSearch) {
+    const near = await deps.hadithSemanticSearch(stripFramingOriginal(f.text)).catch(() => []);
+    for (const n of near) {
+      if (n.score < THRESHOLDS.semanticMin) continue;
+      const candidate = deps.hadith.at(matn, n.index);
+      if (candidate && candidate.similarity >= THRESHOLDS.semanticFloor) {
+        hit = candidate;
+        sim = THRESHOLDS.hadithClose;
+        break;
+      }
+    }
+  }
+  if (!hit || sim < THRESHOLDS.hadithClose) return null;
   const h = hit.hadith;
-  const differs = hit.similarity < THRESHOLDS.hadithExact;
+  const differs = sim < THRESHOLDS.hadithExact;
   return {
     kind: differs ? "different_wording" : "hadith_authentic",
     checkedText: f.text,
@@ -107,7 +125,7 @@ function checkHadeethEnc(f: Fragment, deps: CheckDeps): Verdict | null {
     rulings: [{ scholar: "", ruling: h.grade, book: h.attribution, pageOrNumber: "" }],
     references: [{ label: `موسوعة الأحاديث النبوية - ${h.attribution}`, url: hadeethEncUrl(h.id, deps.lang) }],
     wordingDiffers: differs,
-    similarity: hit.similarity,
+    similarity: sim,
     source: "hadeethenc",
   };
 }
@@ -186,7 +204,7 @@ export async function checkPost(text: string, deps: CheckDeps, manual = false): 
     if (rest !== sk && rest.length < 12) continue; // nothing new beyond what was already matched
 
     let v = await checkQuran(f, deps);
-    if (!v) v = checkHadeethEnc(f, deps);
+    if (!v) v = await checkHadeethEnc(f, deps);
     // A larger fragment that contains one already sent would only repeat the same lookup.
     if (!v && f.hadithLike && !asked.some((a) => sk.includes(a))) {
       asked.push(sk);
