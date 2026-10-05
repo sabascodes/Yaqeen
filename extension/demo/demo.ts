@@ -7,7 +7,7 @@ import { checkPost, type CheckResult } from "../src/core/checker";
 import { HadithIndex } from "../src/core/hadithIndex";
 import { QuranIndex } from "../src/core/quranIndex";
 import type { Ayah, EncHadith } from "../src/core/types";
-import { dorarResultHtml, parseDorarHtml } from "../src/sources/dorar";
+import { dorarQuery, dorarResultHtml, parseDorarHtml } from "../src/sources/dorar";
 import { t, type Lang } from "../src/shared/i18n";
 import { bindCopy, badgeHtml, cardHtml, esc } from "../src/ui/card";
 
@@ -22,6 +22,7 @@ const TEXT = {
     feedNote: "منشورات مكتوبة للعرض، كما تظهر في X وFacebook وTikTok مع الإضافة.",
     check: "فحص المنشور",
     nothing: "لم نجد في النص آية أو حديثًا للتحقق منه.",
+    dorarDown: "لم نجد النص في المصادر المحلية، وتعذر الوصول إلى الدرر السنية الآن. حاول مرة أخرى بعد قليل.",
     loading: "جارٍ تحميل بيانات المصادر…",
     loadError: "تعذر تحميل بيانات المصادر.",
     sources: "المصادر: موسوعة القرآن الكريم quranenc.com · موسوعة الأحاديث النبوية hadeethenc.com · الدرر السنية dorar.net",
@@ -38,6 +39,7 @@ const TEXT = {
     feedNote: "Posts written for this demo, shown as they appear on X, Facebook and TikTok with the extension.",
     check: "Check post",
     nothing: "No ayah or hadith was found in this text to verify.",
+    dorarDown: "The text is not in the local sources, and Dorar could not be reached right now. Please try again shortly.",
     loading: "Loading source data…",
     loadError: "Could not load the source data.",
     sources: "Sources: QuranEnc quranenc.com · HadeethEnc hadeethenc.com · Dorar dorar.net",
@@ -73,7 +75,8 @@ function loadIndexes() {
 }
 
 async function dorar(text: string) {
-  const res = await fetch(`/api/dorar?q=${encodeURIComponent(text)}`);
+  // Same short query the extension sends: Dorar's search fails on long text.
+  const res = await fetch(`/api/dorar?q=${encodeURIComponent(dorarQuery(text))}`);
   if (!res.ok) throw new Error(`Dorar ${res.status}`);
   return parseDorarHtml(dorarResultHtml(await res.json()));
 }
@@ -84,7 +87,7 @@ async function check(text: string, manual: boolean): Promise<CheckResult> {
 }
 
 function resultHtml(r: CheckResult): string {
-  if (r.incomplete && !r.verdicts.length) return `<p class="note">${esc(t(lang).error)}</p>`;
+  if (r.incomplete && !r.verdicts.length) return `<p class="note">${esc(TEXT[lang].dorarDown)}</p>`;
   return r.verdicts.map((v) => cardHtml(v, lang)).join("") || `<p class="field__value">${esc(TEXT[lang].nothing)}</p>`;
 }
 
