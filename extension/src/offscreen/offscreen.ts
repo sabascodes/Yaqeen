@@ -1,10 +1,11 @@
 /**
- * Offscreen document: on-device OCR (Tesseract, Arabic + English) and the
+ * Offscreen document: on-device OCR (Tesseract, Arabic) and the
  * multilingual embedding model. Images and text never leave the device here.
  */
 import { createWorker, type Worker } from "tesseract.js";
 import { env, pipeline, type FeatureExtractionPipeline } from "@huggingface/transformers";
 import type { OffscreenRequest } from "../shared/messages";
+import { prepareForOcr } from "../shared/ocrImage";
 
 // Same model that produced the ayah embeddings (backend/data/quran_embeddings.npy), as ONNX.
 const EMBEDDING_MODEL = "Xenova/multilingual-e5-base";
@@ -13,7 +14,9 @@ let ocrWorker: Promise<Worker> | null = null;
 let embedder: Promise<FeatureExtractionPipeline> | null = null;
 
 function getOcr(): Promise<Worker> {
-  ocrWorker ??= createWorker(["ara", "eng"], 1, {
+  // Arabic only: posts are checked for Arabic text, and an English model mixed in turns
+  // decorated Arabic letters into Latin ones.
+  ocrWorker ??= createWorker("ara", 1, {
     workerPath: chrome.runtime.getURL("vendor/tesseract/worker.min.js"),
     corePath: chrome.runtime.getURL("vendor/tesseract-core/"),
     langPath: chrome.runtime.getURL("vendor/tessdata/"),
@@ -36,7 +39,8 @@ function getEmbedder(): Promise<FeatureExtractionPipeline> {
 
 async function ocr(dataUrl: string): Promise<string> {
   const worker = await getOcr();
-  const { data } = await worker.recognize(dataUrl);
+  const blob = await (await fetch(dataUrl)).blob();
+  const { data } = await worker.recognize(await prepareForOcr(blob));
   // Lines in an image are usually one sentence wrapped to fit: check them as one text, so a
   // wrapped half of a hadith is not matched on its own against an unrelated verse.
   return data.text.replace(/\s*\n\s*/g, " ").trim();

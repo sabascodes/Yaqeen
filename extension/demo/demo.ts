@@ -37,6 +37,8 @@ const TEXT = {
     tabs: { try: "جرّب بنفسك", media: "صورة أو فيديو", post: "على منشور", popup: "النافذة المنبثقة", settings: "الإعدادات", types: "أنواع النتائج" },
     mediaTitle: "تحقّق من صورة أو فيديو",
     mediaNote: "ارفع لقطة شاشة أو صورة أو فيديو محفوظًا من TikTok أو X أو Facebook. يقرأ يقين النص المكتوب في الصورة، ويحوّل الكلام في الفيديو إلى نص، ثم يتحقق منه. كل ذلك يتم داخل متصفحك، ولا يُرفع الملف إلى أي خادم.",
+    contentLang: "ما لغة المحتوى؟",
+    contentLangs: { ar: "العربية", en: "الإنجليزية" },
     pick: "اختر صورة أو فيديو",
     drop: "أو اسحب الملف وأفلته هنا",
     sample: "جرّب صورة نموذجية",
@@ -101,6 +103,8 @@ const TEXT = {
     tabs: { try: "Try it", media: "Photo or video", post: "On a post", popup: "Popup", settings: "Settings", types: "Result types" },
     mediaTitle: "Check a photo or video",
     mediaNote: "Upload a screenshot, photo, or a video saved from TikTok, X or Facebook. Yaqeen reads the text in the image and turns the speech in the video into text, then checks it. All of this happens in your browser; the file is never uploaded.",
+    contentLang: "What language is the content in?",
+    contentLangs: { ar: "Arabic", en: "English" },
     pick: "Choose a photo or video",
     drop: "or drag and drop the file here",
     sample: "Try a sample image",
@@ -282,6 +286,10 @@ function viewHtml(x: (typeof TEXT)[Lang]): string {
         <section class="panel">
           <h2>${esc(x.mediaTitle)}</h2>
           <p class="muted">${esc(x.mediaNote)}</p>
+          <fieldset class="seg">
+            <legend>${esc(x.contentLang)}</legend>
+            ${(["ar", "en"] as const).map((l) => `<label><input type="radio" name="clang" value="${l}"${l === contentLang ? " checked" : ""}><span>${esc(x.contentLangs[l])}</span></label>`).join("")}
+          </fieldset>
           <label class="drop" id="drop">
             <input type="file" id="file" accept="image/*,video/*,audio/*" hidden>
             <span class="btn btn--primary">${esc(x.pick)}</span>
@@ -371,9 +379,15 @@ function viewHtml(x: (typeof TEXT)[Lang]): string {
   }
 }
 
+/** The language of the uploaded content; it decides which reading model is used. */
+let contentLang: media.ContentLang = "ar";
+
 function bindMedia() {
   const input = document.getElementById("file") as HTMLInputElement | null;
   if (!input) return;
+  document.querySelectorAll<HTMLInputElement>('input[name="clang"]').forEach((r) =>
+    r.addEventListener("change", () => (contentLang = r.value as media.ContentLang)),
+  );
   const drop = document.getElementById("drop")!;
   input.addEventListener("change", () => input.files?.[0] && void handleFile(input.files[0]));
   drop.addEventListener("dragover", (e) => (e.preventDefault(), drop.classList.add("drop--over")));
@@ -447,16 +461,16 @@ async function handleFile(file: File) {
   };
   try {
     media.diag.length = 0;
-    media.diag.push(`file: ${file.type || "unknown type"}, ${(file.size / 1e6).toFixed(1)} MB`, `browser: ${navigator.userAgent.match(/(Edg|Chrome|Firefox|Version)\/[\d.]+/g)?.join(" ") ?? navigator.userAgent}`, `threads: ${crossOriginIsolated ? navigator.hardwareConcurrency : 1}`);
+    media.diag.push(`content language: ${contentLang}`, `file: ${file.type || "unknown type"}, ${(file.size / 1e6).toFixed(1)} MB`, `browser: ${navigator.userAgent.match(/(Edg|Chrome|Firefox|Version)\/[\d.]+/g)?.join(" ") ?? navigator.userAgent}`, `threads: ${crossOriginIsolated ? navigator.hardwareConcurrency : 1}`);
     let text = "";
     let speechFailed = false;
     if (isImage) {
       step("ocr");
-      text = await media.readImage(file);
+      text = await media.readImage(file, contentLang);
     } else {
       // Either part can fail on its own (no audio track, model download blocked); keep what works.
-      const speech = await media.listen(file, step).catch((e) => (console.error(e), media.diag.push(`speech: failed (${e})`), (speechFailed = true), ""));
-      const screen = file.type.startsWith("video/") ? await media.readFrames(file, step) : "";
+      const speech = await media.listen(file, contentLang, step).catch((e) => (console.error(e), media.diag.push(`speech: failed (${e})`), (speechFailed = true), ""));
+      const screen = file.type.startsWith("video/") ? await media.readFrames(file, contentLang, step) : "";
       text = [speech, screen].filter(Boolean).join("\n");
       document.getElementById("asrnote")!.hidden = !speech;
     }

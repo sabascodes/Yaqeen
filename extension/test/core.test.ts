@@ -202,6 +202,12 @@ describe("sources", () => {
     expect(f.map((x) => x.text)).toContain("إياك نعبد وإياك نستعين");
     expect(f.every((x) => x.quranLike)).toBe(true);
   });
+
+  it("checks the parts around a bracketed note on their own", () => {
+    const f = extractFragments("ألا أحدثكم حديثا عن الدجال (وفي رواية أخرى عند مسلم) مكتوب بين عينيه كافر رواه البخاري");
+    expect(f.map((x) => x.text)).toContain("ألا أحدثكم حديثا عن الدجال");
+    expect(f.map((x) => x.text)).toContain("مكتوب بين عينيه كافر رواه البخاري");
+  });
 });
 
 describe("manual checks", () => {

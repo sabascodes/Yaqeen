@@ -1,9 +1,11 @@
 /**
  * Reading text out of uploaded photos and videos, all in the visitor's browser:
- * Tesseract (Arabic + English) for text in images and video frames, and Whisper for speech.
+ * Tesseract for text in images and video frames, and Whisper for speech, in the language the
+ * visitor picks (Arabic or English).
  * Nothing is uploaded; the extracted text then goes through the same checks as pasted text.
  */
 import type { Worker } from "tesseract.js";
+import { prepareForOcr } from "../src/shared/ocrImage";
 import type { AutomaticSpeechRecognitionPipeline } from "@huggingface/transformers";
 
 /** What happened during the last run, shown under "Technical details" to help find problems. */
@@ -17,11 +19,16 @@ const SPEECH_MODEL = "Xenova/whisper-small";
 const MAX_SECONDS = 90;
 const FRAME_COUNT = 6;
 
-let ocrWorker: Promise<Worker> | null = null;
-function getOcr(): Promise<Worker> {
+/** The language of the content being read, chosen by the visitor. */
+export type ContentLang = "ar" | "en";
+
+const ocrWorkers = new Map<ContentLang, Promise<Worker>>();
+function getOcr(contentLang: ContentLang): Promise<Worker> {
+  let w = ocrWorkers.get(contentLang);
   // tesseract.js is CommonJS, so a dynamic import may wrap it in `default`.
-  ocrWorker ??= import("tesseract.js").then((m) =>
-    ((m as unknown as { default?: typeof m }).default ?? m).createWorker(["ara", "eng"], 1, {
+  // One language per worker: mixing Arabic and English models made Latin letters appear in Arabic text.
+  w ??= import("tesseract.js").then((m) =>
+    ((m as unknown as { default?: typeof m }).default ?? m).createWorker(contentLang === "ar" ? "ara" : "eng", 1, {
       workerPath: new URL("vendor/tesseract/worker.min.js", location.href).href,
       corePath: new URL("vendor/tesseract-core/", location.href).href,
       langPath: new URL("vendor/tessdata/", location.href).href,
@@ -29,7 +36,9 @@ function getOcr(): Promise<Worker> {
       gzip: true,
     }),
   );
-  return ocrWorker;
+  w.catch(() => ocrWorkers.delete(contentLang));
+  ocrWorkers.set(contentLang, w);
+  return w;
 }
 
 /**
@@ -37,10 +46,12 @@ function getOcr(): Promise<Worker> {
  * usually one sentence wrapped to fit, so they are joined; otherwise a wrapped half of a hadith
  * could be checked on its own and match an unrelated verse.
  */
-export async function readImage(img: Blob | HTMLCanvasElement): Promise<string> {
-  const worker = await getOcr();
-  const { data } = await worker.recognize(img);
-  return tidy(data.text).replace(/\n/g, " ");
+export async function readImage(img: Blob | HTMLCanvasElement, contentLang: ContentLang): Promise<string> {
+  const worker = await getOcr(contentLang);
+  const canvas = await prepareForOcr(img);
+  note(`image: read at ${canvas.width}x${canvas.height}`);
+  const { data } = await worker.recognize(canvas);
+  return tidy(data.text, contentLang).replace(/\n/g, " ");
 }
 
 let asr: Promise<AutomaticSpeechRecognitionPipeline> | null = null;
@@ -86,8 +97,8 @@ export async function audioSamples(file: Blob): Promise<Float32Array | null> {
   }
 }
 
-/** Arabic speech in the file, as text. Empty when there is no usable audio. */
-export async function listen(file: Blob, onProgress: Progress): Promise<string> {
+/** Speech in the file, as text. Empty when there is no usable audio. */
+export async function listen(file: Blob, contentLang: ContentLang, onProgress: Progress): Promise<string> {
   const samples = await audioSamples(file);
   if (!samples || !samples.some((x) => Math.abs(x) > 0.01)) {
     if (samples) note("audio: silent");
@@ -96,14 +107,14 @@ export async function listen(file: Blob, onProgress: Progress): Promise<string> 
   const model = await getAsr(onProgress);
   note("speech model: loaded");
   onProgress("listen");
-  const out = await model(samples, { language: "arabic", task: "transcribe", chunk_length_s: 30, stride_length_s: 5 });
+  const out = await model(samples, { language: contentLang === "ar" ? "arabic" : "english", task: "transcribe", chunk_length_s: 30, stride_length_s: 5 });
   const raw = (Array.isArray(out) ? out[0] : out)?.text ?? "";
   note(`speech: ${raw.length} characters`);
-  return tidy(raw);
+  return tidy(raw, contentLang);
 }
 
 /** Text shown on screen in a video, read from frames spread across it. */
-export async function readFrames(file: Blob, onProgress: Progress): Promise<string> {
+export async function readFrames(file: Blob, contentLang: ContentLang, onProgress: Progress): Promise<string> {
   const video = document.createElement("video");
   video.muted = true;
   video.preload = "auto";
@@ -123,7 +134,7 @@ export async function readFrames(file: Blob, onProgress: Progress): Promise<stri
       video.currentTime = (duration * (i + 0.5)) / FRAME_COUNT;
       await new Promise((ok) => (video.onseeked = ok));
       canvas.getContext("2d")!.drawImage(video, 0, 0, canvas.width, canvas.height);
-      for (const line of (await readImage(canvas)).split("\n")) if (isNewLine(line, lines)) lines.push(line);
+      for (const line of (await readImage(canvas, contentLang)).split("\n")) if (isNewLine(line, lines)) lines.push(line);
     }
     note(`on-screen text: ${lines.length} line(s)`);
     return lines.join("\n");
@@ -135,12 +146,13 @@ export async function readFrames(file: Blob, onProgress: Progress): Promise<stri
   }
 }
 
-/** Keeps lines with some Arabic or Latin words, dropping OCR noise. */
-function tidy(text: string): string {
+/** Keeps lines with some words in the chosen language, dropping OCR noise. */
+function tidy(text: string, contentLang: ContentLang): string {
+  const letter = contentLang === "ar" ? /[ء-ي]/g : /[A-Za-z]/g;
   return text
     .split("\n")
     .map((l) => l.replace(/\s+/g, " ").trim())
-    .filter((l) => (l.match(/[ء-ي]|[A-Za-z]/g) ?? []).length >= 3)
+    .filter((l) => (l.match(letter) ?? []).length >= 3)
     .join("\n");
 }
 

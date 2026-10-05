@@ -98,6 +98,9 @@ export function extractFragments(postText: string): Fragment[] {
   for (const q of quotes) pieces.add(q);
   // Paragraphs, then the whole post (a quote can span several lines).
   for (const p of text.split(/\n+/)) pieces.add(p);
+  // Text in brackets is usually a note between parts of a post ("(وفي رواية أخرى ...)"), so the
+  // parts on either side are also checked on their own; text read from an image has no line breaks.
+  for (const p of text.split(/[()]+/)) pieces.add(p);
   pieces.add(text);
 
   const out: Fragment[] = [];
