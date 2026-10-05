@@ -68,23 +68,46 @@ export async function fetchHadith(id: string, fetchImpl: typeof fetch = fetch): 
   return parseOne(ar, translation);
 }
 
+/**
+ * Downloads every hadith not already in `have`. `onBatch` receives the records downloaded so
+ * far (every `batchSize`), so an interrupted download can resume. A record that still fails
+ * after one retry is skipped and counted, instead of failing the whole download.
+ */
 export async function fetchAllHadith(
-  onProgress?: (done: number, total: number) => void,
-  fetchImpl: typeof fetch = fetch,
-  concurrency = 4,
-): Promise<EncHadith[]> {
+  opts: {
+    have?: EncHadith[];
+    onProgress?: (done: number, total: number) => void;
+    onBatch?: (items: EncHadith[]) => Promise<void>;
+    batchSize?: number;
+    concurrency?: number;
+    fetchImpl?: typeof fetch;
+  } = {},
+): Promise<{ items: EncHadith[]; failed: number }> {
+  const { onProgress, onBatch, batchSize = 100, concurrency = 4, fetchImpl = fetch } = opts;
   const ids = await listAllIds(fetchImpl);
-  const out: EncHadith[] = [];
+  const wanted = new Set(ids);
+  const out = (opts.have ?? []).filter((h) => wanted.has(String(h.id)));
+  const done = new Set(out.map((h) => String(h.id)));
+  const todo = ids.filter((id) => !done.has(id));
+  let failed = 0;
   let next = 0;
+  let sinceBatch = 0;
+  onProgress?.(out.length, ids.length);
   const worker = async () => {
-    while (next < ids.length) {
-      const id = ids[next++]!;
-      out.push(await fetchHadith(id, fetchImpl));
-      onProgress?.(out.length, ids.length);
+    while (next < todo.length) {
+      const id = todo[next++]!;
+      const h = await fetchHadith(id, fetchImpl).catch(() => fetchHadith(id, fetchImpl)).catch(() => null);
+      if (h) out.push(h);
+      else failed++;
+      onProgress?.(out.length + failed, ids.length);
+      if (onBatch && ++sinceBatch >= batchSize) {
+        sinceBatch = 0;
+        await onBatch(out.slice());
+      }
     }
   };
   await Promise.all(Array.from({ length: concurrency }, worker));
-  return out;
+  return { items: out, failed };
 }
 
 export function hadeethEncUrl(id: string, lang: "ar" | "en" = "ar"): string {

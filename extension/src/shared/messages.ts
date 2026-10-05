@@ -12,6 +12,8 @@ export interface DataStatus {
   syncing: boolean;
   progress?: { step: "quran" | "hadith"; done: number; total: number };
   error?: string;
+  /** Hadith that could not be downloaded in the last run (retried on the next one). */
+  failed?: number;
   syncedAt?: string;
 }
 

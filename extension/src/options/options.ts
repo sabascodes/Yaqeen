@@ -13,8 +13,12 @@ const TEXT = {
     download: "تنزيل البيانات الآن",
     update: "تحديث البيانات",
     quran: "آيات القرآن",
+    suras: "سور القرآن",
     hadith: "أحاديث موسوعة الأحاديث النبوية",
     syncing: "جارٍ التنزيل",
+    keepOpen: "يمكنك تغيير الإعدادات أثناء التنزيل. إذا أُغلق المتصفح يكمل التنزيل من حيث توقف.",
+    failed: (n: number) => `تعذر تنزيل ${n} حديثًا، اضغطي زر التحديث لإعادة المحاولة.`,
+    error: "تعذر التنزيل الآن. تأكدي من الاتصال بالإنترنت ثم اضغطي الزر مرة أخرى.",
     lastSync: "آخر تحديث",
     lang: "لغة الواجهة",
     auto: "حسب المتصفح",
@@ -47,8 +51,12 @@ const TEXT = {
     download: "Download data now",
     update: "Update data",
     quran: "Quran ayat",
+    suras: "Quran suras",
     hadith: "HadeethEnc hadith",
     syncing: "Downloading",
+    keepOpen: "You can change settings while downloading. If the browser closes, the download continues where it stopped.",
+    failed: (n: number) => `${n} hadith could not be downloaded; press Update to retry them.`,
+    error: "The download failed. Check your internet connection and press the button again.",
     lastSync: "Last updated",
     lang: "Interface language",
     auto: "Follow browser",
@@ -81,29 +89,49 @@ function check(id: keyof Settings, s: Settings, label: string) {
   return `<label><input type="checkbox" data-key="${id}" ${s[id] ? "checked" : ""}> <span>${esc(label)}</span></label>`;
 }
 
-async function render() {
-  const s = await loadSettings();
-  const lang = resolveLang(s.lang);
-  const x = TEXT[lang];
-  const st = await status();
-  document.documentElement.lang = lang;
-  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
-  app.setAttribute("lang", lang);
+/** The source-data section only, so it can refresh during a download without touching the form. */
+function dataSection(st: DataStatus, x: (typeof TEXT)["ar"] | (typeof TEXT)["en"], lang: "ar" | "en"): string {
   const progress = st.progress
-    ? `<progress max="${st.progress.total}" value="${st.progress.done}"></progress><span class="muted">${esc(x.syncing)}: ${esc(st.progress.step === "quran" ? x.quran : x.hadith)} ${st.progress.done}/${st.progress.total}</span>`
+    ? `<progress max="${st.progress.total}" value="${st.progress.done}"></progress><span class="muted">${esc(x.syncing)}: ${esc(st.progress.step === "quran" ? x.suras : x.hadith)} ${st.progress.done}/${st.progress.total}</span><span class="muted">${esc(x.keepOpen)}</span>`
     : "";
-  app.innerHTML = `
-    <h1>${esc(x.title)}</h1>
-    <section><p>${esc(x.about)}</p></section>
-    <section>
+  return `
       <h2>${esc(x.data)}</h2>
       <p class="muted">${esc(x.dataBody)}</p>
       <p>${esc(x.quran)}: <b>${st.quranAyat}</b> · ${esc(x.hadith)}: <b>${st.hadithCount}</b></p>
       ${st.syncedAt ? `<p class="muted">${esc(x.lastSync)}: ${esc(new Date(st.syncedAt).toLocaleString(lang))}</p>` : ""}
-      ${st.error ? `<p class="note">${esc(st.error)}</p>` : ""}
+      ${st.error ? `<p class="note">${esc(x.error)}</p><p class="muted" dir="ltr">${esc(st.error)}</p>` : ""}
+      ${st.failed ? `<p class="note">${esc(x.failed(st.failed))}</p>` : ""}
       ${progress}
-      <div><button class="btn btn--primary" id="sync" ${st.syncing ? "disabled" : ""}>${esc(st.quranAyat ? x.update : x.download)}</button></div>
-    </section>
+      <div><button class="btn btn--primary" id="sync" ${st.syncing ? "disabled" : ""}>${esc(st.quranAyat ? x.update : x.download)}</button></div>`;
+}
+
+let polling: ReturnType<typeof setTimeout> | undefined;
+
+/** Redraws the data section, and keeps doing so every second while a download runs. */
+async function refreshData(lang: "ar" | "en") {
+  clearTimeout(polling);
+  const el = document.getElementById("data");
+  if (!el) return;
+  const st = await status();
+  el.innerHTML = dataSection(st, TEXT[lang], lang);
+  document.getElementById("sync")!.addEventListener("click", async () => {
+    await chrome.runtime.sendMessage({ type: "sync" });
+    void refreshData(lang);
+  });
+  if (st.syncing) polling = setTimeout(() => void refreshData(lang), 1000);
+}
+
+async function render() {
+  const s = await loadSettings();
+  const lang = resolveLang(s.lang);
+  const x = TEXT[lang];
+  document.documentElement.lang = lang;
+  document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+  app.setAttribute("lang", lang);
+  app.innerHTML = `
+    <h1>${esc(x.title)}</h1>
+    <section><p>${esc(x.about)}</p></section>
+    <section id="data"></section>
     <section>
       <label>${esc(x.lang)}
         <select id="lang">
@@ -119,10 +147,6 @@ async function render() {
     <section><h2>${esc(x.privacy)}</h2><ul>${x.privacyItems.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></section>
     <section><h2>${esc(x.sources)}</h2><ul>${x.sourceItems.map((i) => `<li>${esc(i)}</li>`).join("")}</ul></section>`;
 
-  document.getElementById("sync")!.addEventListener("click", async () => {
-    await chrome.runtime.sendMessage({ type: "sync" });
-    void render();
-  });
   document.getElementById("lang")!.addEventListener("change", async (e) => {
     await saveSettings({ lang: (e.target as HTMLSelectElement).value as Settings["lang"] });
     void render();
@@ -130,7 +154,7 @@ async function render() {
   app.querySelectorAll<HTMLInputElement>("input[data-key]").forEach((el) =>
     el.addEventListener("change", () => saveSettings({ [el.dataset.key!]: el.checked })),
   );
-  if (st.syncing) setTimeout(render, 1000);
+  await refreshData(lang);
 }
 
 void render();

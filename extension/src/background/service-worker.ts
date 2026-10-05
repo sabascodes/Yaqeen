@@ -40,26 +40,52 @@ async function sync(): Promise<void> {
   if (status.syncing) return;
   status.syncing = true;
   status.error = undefined;
+  status.failed = undefined;
+  // The browser stops an idle service worker after about 30 seconds; calling an extension
+  // API regularly keeps it running for the length of the download.
+  const keepAlive = setInterval(() => void chrome.runtime.getPlatformInfo(), 20_000);
   try {
-    const ayat = await fetchWholeQuran((done, total) => (status.progress = { step: "quran", done, total }));
-    await store.set("quran", ayat);
+    await store.set("syncPending", true);
+    // A download that was interrupted (browser closed) resumes: the Quran is kept if complete,
+    // and hadith already downloaded are not fetched again.
+    const partial = (await store.get<EncHadith[]>("hadeethencPartial")) ?? [];
+    const storedAyat = partial.length ? await store.get<Ayah[]>("quran") : undefined;
+    let ayat = storedAyat?.length === 6236 ? storedAyat : undefined;
+    if (!ayat) {
+      ayat = await fetchWholeQuran((done, total) => (status.progress = { step: "quran", done, total }));
+      await store.set("quran", ayat);
+    }
     quran = new QuranIndex(ayat);
     status.quranAyat = quran.size;
 
-    const ahadith = await fetchAllHadith((done, total) => (status.progress = { step: "hadith", done, total }));
-    await store.set("hadeethenc", ahadith);
-    hadith = new HadithIndex(ahadith);
+    const { items, failed } = await fetchAllHadith({
+      have: partial,
+      onProgress: (done, total) => (status.progress = { step: "hadith", done, total }),
+      onBatch: (so) => store.set("hadeethencPartial", so),
+    });
+    await store.set("hadeethenc", items);
+    await store.set("hadeethencPartial", []);
+    hadith = new HadithIndex(items);
     status.hadithCount = hadith.size;
+    status.failed = failed || undefined;
 
     status.syncedAt = new Date().toISOString();
     await store.set("syncedAt", status.syncedAt);
+    await store.set("syncPending", false);
   } catch (e) {
     status.error = String(e);
+    await store.set("syncPending", false);
   } finally {
+    clearInterval(keepAlive);
     status.syncing = false;
     status.progress = undefined;
   }
 }
+
+// Resume a download that was interrupted when the browser or the service worker stopped.
+void store.get<boolean>("syncPending").then((pending) => {
+  if (pending) void sync();
+});
 
 // ---------- Offscreen document (OCR + embeddings run there: they need DOM/WASM workers) ----------
 

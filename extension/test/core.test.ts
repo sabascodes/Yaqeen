@@ -5,6 +5,7 @@ import { HadithIndex } from "../src/core/hadithIndex";
 import { checkPost, verdictFromRulings, type CheckDeps } from "../src/core/checker";
 import { classifyRuling } from "../src/core/grades";
 import { dorarResultHtml, parseDorarHtml } from "../src/sources/dorar";
+import { fetchAllHadith } from "../src/sources/hadeethenc";
 import { suraName } from "../src/core/suras";
 import { extractFragments, stripFramingOriginal } from "../src/core/detect";
 import { AYAT, ENC, dorarHtml } from "./fixtures";
@@ -289,5 +290,32 @@ describe("online lookups", () => {
     await checkPost("صباح الخير لكل المتابعين الكرام في هذا اليوم\nقال رسول الله ﷺ: نص حديث للتجربة غير موجود محليا", deps({ dorar }));
     expect(dorar).toHaveBeenCalledTimes(1);
     expect(dorar).toHaveBeenCalledWith("نص حديث للتجربة غير موجود محليا");
+  });
+});
+
+describe("HadeethEnc download", () => {
+  const api = (fail: Set<string>) =>
+    vi.fn(async (url: string) => {
+      const u = new URL(url);
+      const json = (b: unknown) => new Response(JSON.stringify(b));
+      if (u.pathname.includes("categories")) return json([{ id: "1" }]);
+      if (u.pathname.includes("hadeeths/list")) return json({ data: ENC.map((h) => ({ id: h.id })), meta: { current_page: 1, last_page: 1 } });
+      const h = ENC.find((x) => x.id === u.searchParams.get("id"))!;
+      if (fail.has(h.id)) return new Response("err", { status: 500 });
+      return json({ id: h.id, hadeeth: h.text, attribution: h.attribution, grade: h.grade });
+    }) as unknown as typeof fetch;
+
+  it("skips a record that keeps failing instead of failing the whole download", async () => {
+    const r = await fetchAllHadith({ fetchImpl: api(new Set([ENC[1]!.id])) });
+    expect(r.items.map((h) => h.id)).toEqual([ENC[0]!.id]);
+    expect(r.failed).toBe(1);
+  });
+
+  it("resumes without downloading records it already has", async () => {
+    const fetchImpl = api(new Set());
+    const r = await fetchAllHadith({ have: [ENC[0]!], fetchImpl });
+    expect(r.items).toHaveLength(2);
+    const ones = (fetchImpl as unknown as { mock: { calls: string[][] } }).mock.calls.filter(([u]) => u!.includes("/one/"));
+    expect(ones.every(([u]) => !u!.includes(`id=${ENC[0]!.id}`))).toBe(true);
   });
 });
