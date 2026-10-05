@@ -71,6 +71,9 @@ def test_not_found():
 
 def test_verify_endpoint(monkeypatch):
     monkeypatch.setattr(hadith, "fetch", lambda text: dorar_html([row("صحيح"), row("ضعيف", "العالم ب")]))
+    # هذا الاختبار للدرر وحدها، فلا تُستخدم بيانات القرآن والموسوعة المنزّلة إن وُجدت.
+    monkeypatch.setattr(main.quran, "load_index", lambda: None)
+    monkeypatch.setattr(main.hadeethenc, "load_index", lambda: None)
     client = TestClient(main.app)
     card = client.post("/verify", json={"text": TEXT}).json()["card"]
     assert card["type"] == "differed"
