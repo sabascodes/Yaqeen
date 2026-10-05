@@ -43,7 +43,31 @@ const TEXT = {
     picError: "تعذرت قراءة هذا الملف. جرّب صورة JPG أو PNG.",
     notPicture: "هذه النسخة تقرأ الصور فقط.",
     other: "English",
-    tabs: { try: "جرّب بنفسك", picture: "صورة", post: "على منشور", popup: "النافذة المنبثقة", settings: "الإعدادات" },
+    tabs: { try: "جرّب بنفسك", picture: "صورة", post: "على منشور", popup: "النافذة المنبثقة", install: "التثبيت", settings: "الإعدادات" },
+    install: {
+      tab: "التثبيت",
+      cta: "أضف يقين إلى المتصفح",
+      title: "أضف يقين إلى متصفحك",
+      storeBtn: (b: string) => `أضف إلى ${b}`,
+      storeNote: "تفتح صفحة يقين في متجر الإضافات، اضغط فيها «إضافة» أو «Get» وسيعمل يقين مباشرة.",
+      soon: "سيصبح التثبيت بضغطة واحدة عند نشر يقين في متجر الإضافات. إلى ذلك الحين، ثبّته بالخطوات التالية مرة واحدة فقط (حوالي دقيقتين، دون أي برمجة).",
+      download: "تنزيل يقين",
+      size: "ملف مضغوط، حوالي 19 ميجابايت",
+      steps: [
+        ["نزّل الملف", "اضغط زر «تنزيل يقين» بالأعلى، وسيُحفظ الملف yaqeen-extension.zip في مجلد التنزيلات."],
+        ["افتح الملف المضغوط", "على Mac: اضغط على الملف مرتين فيظهر بجانبه مجلد yaqeen-extension. على Windows: اضغط عليه بالزر الأيمن ثم «استخراج الكل» (Extract All). لا تحذف هذا المجلد بعد التثبيت."],
+        ["افتح صفحة الإضافات", "انسخ هذا العنوان والصقه في شريط العنوان ثم اضغط Enter:"],
+        ["فعّل «وضع المطوّر»", "Developer mode: في Edge تجده أسفل القائمة الجانبية، وفي Chrome أعلى الصفحة. هذا يسمح بتثبيت الإضافة من ملف."],
+        ["اضغط «تحميل غير المضغوط»", "Load unpacked، ثم اختر مجلد yaqeen-extension الذي استخرجته."],
+        ["نزّل بيانات المصادر", "تفتح صفحة إعدادات يقين تلقائيًا: اضغط «تنزيل البيانات الآن» وانتظر حتى يظهر عدد الآيات (6236). بعدها اضغط أيقونة يقين بجانب شريط العنوان، أو افتح X أو Facebook."],
+      ],
+      copy: "نسخ",
+      copied: "تم النسخ",
+      other: "يعمل يقين في متصفحي Edge وChrome على الحاسوب (Windows وMac). لا يمكن تثبيت الإضافات على الجوال أو iPad، لكن يمكنك تجربة يقين في هذه الصفحة.",
+      pin: "نصيحة: اضغط أيقونة الإضافات (قطعة البازل) ثم الدبوس بجانب يقين ليبقى ظاهرًا بجانب شريط العنوان.",
+      mockLoad: "تحميل غير المضغوط",
+      mockDev: "وضع المطوّر",
+    },
     postNote: "صورة توضيحية لمنشور على X كما يظهر في الهاتف. الزر الوحيد الذي يعمل هو زر يقين تحت المنشور.",
     postBar: "منشور",
     popupNote: "هذه النافذة تفتح من أيقونة يقين في شريط المتصفح.",
@@ -102,7 +126,31 @@ const TEXT = {
     picError: "This file could not be read. Try a JPG or PNG picture.",
     notPicture: "This demo reads pictures only.",
     other: "العربية",
-    tabs: { try: "Try it", picture: "Picture", post: "On a post", popup: "Popup", settings: "Settings" },
+    tabs: { try: "Try it", picture: "Picture", post: "On a post", popup: "Popup", install: "Install", settings: "Settings" },
+    install: {
+      tab: "Install",
+      cta: "Add Yaqeen to your browser",
+      title: "Add Yaqeen to your browser",
+      storeBtn: (b: string) => `Add to ${b}`,
+      storeNote: "Yaqeen's page in the add-ons store opens; press Get or Add and Yaqeen works right away.",
+      soon: "Installing will be one click once Yaqeen is published in the add-ons stores. Until then, install it with these steps, once (about two minutes, no coding).",
+      download: "Download Yaqeen",
+      size: "Zip file, about 19 MB",
+      steps: [
+        ["Download the file", "Press Download Yaqeen above. The file yaqeen-extension.zip is saved to your Downloads folder."],
+        ["Open the zip file", "On a Mac: double-click it and a yaqeen-extension folder appears next to it. On Windows: right-click it and choose Extract All. Keep this folder after installing."],
+        ["Open the extensions page", "Copy this address, paste it in the address bar and press Enter:"],
+        ["Turn on Developer mode", "In Edge it is at the bottom of the left menu; in Chrome it is at the top right. It allows installing an extension from a folder."],
+        ["Press Load unpacked", "Then choose the yaqeen-extension folder you extracted."],
+        ["Download the source data", "Yaqeen's settings page opens by itself: press Download data now and wait until the ayat count (6236) shows. Then press the Yaqeen icon next to the address bar, or open X or Facebook."],
+      ],
+      copy: "Copy",
+      copied: "Copied",
+      other: "Yaqeen works in Edge and Chrome on a computer (Windows or Mac). Phones and iPads cannot add extensions, but you can try Yaqeen on this page.",
+      pin: "Tip: press the extensions icon (the puzzle piece), then the pin next to Yaqeen, so it stays next to the address bar.",
+      mockLoad: "Load unpacked",
+      mockDev: "Developer mode",
+    },
     postNote: "An illustration of a post on X as it appears on a phone. The only working button is the Yaqeen button under the post.",
     postBar: "Post",
     popupNote: "This window opens from the Yaqeen icon in the browser toolbar.",
@@ -150,9 +198,24 @@ let lang: Lang = (() => {
   return navigator.language.toLowerCase().startsWith("ar") ? "ar" : "en";
 })();
 
-type View = "try" | "picture" | "post" | "popup" | "settings";
+/**
+ * Store listings. Once Yaqeen is published, put each listing's address here and the Install page
+ * shows a one-click "Add to Edge / Chrome" button instead of the manual steps.
+ */
+const STORE: Record<Browser, string> = { edge: "", chrome: "" };
+type Browser = "edge" | "chrome";
+const BROWSER_NAME: Record<Browser, string> = { edge: "Edge", chrome: "Chrome" };
+const browser: Browser | null = (() => {
+  const ua = navigator.userAgent;
+  if (/Android|iPhone|iPad|Mobile/i.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return null;
+  if (/Edg\//.test(ua)) return "edge";
+  if (/Chrome\//.test(ua) && !/OPR\/|Brave/.test(ua)) return "chrome";
+  return null;
+})();
+
+type View = "try" | "picture" | "post" | "popup" | "install" | "settings";
 const viewFromHash = (): View =>
-  (["try", "picture", "post", "popup", "settings"] as const).find((v) => v === location.hash.slice(1)) ?? "try";
+  (["try", "picture", "post", "popup", "install", "settings"] as const).find((v) => v === location.hash.slice(1)) ?? "try";
 let view: View = viewFromHash();
 addEventListener("hashchange", () => {
   if (viewFromHash() === view) return;
@@ -198,7 +261,7 @@ function render() {
   document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
   const app = document.getElementById("app")!;
   app.setAttribute("lang", lang);
-  const tabs = (["try", "picture", "post", "popup"] as const)
+  const tabs = (["try", "picture", "post", "popup", "install"] as const)
     .map((v) => `<a class="tab" href="#${v}" data-view="${v}" ${v === view ? 'aria-current="page"' : ""}>${esc(x.tabs[v])}</a>`)
     .join("");
   app.innerHTML = `
@@ -214,6 +277,7 @@ function render() {
         <p class="eyebrow">${esc(x.eyebrow)}</p>
         <h1>${esc(x.headline)}</h1>
         <p class="tagline">${esc(x.tagline)}</p>
+        ${view === "install" ? "" : `<a class="btn btn--install" href="#install" data-view="install">${DOWNLOAD}${esc(x.install.cta)}</a>`}
       </div>
       ${markSvg(180, { faded: true })}
     </div></section>
@@ -257,6 +321,11 @@ function render() {
   bindForm("pform", "pq", "pout");
   bindForm("mform", "mq", "mout");
   bindPicture();
+  document.querySelectorAll<HTMLButtonElement>("[data-copy]").forEach((b) =>
+    b.addEventListener("click", () => {
+      void navigator.clipboard?.writeText(b.dataset.copy!).then(() => (b.textContent = x.install.copied));
+    }),
+  );
   document.querySelectorAll<HTMLElement>(".post").forEach(bindPost);
   void loadIndexes().then(() => {
     const a = document.getElementById("nAyat"), h = document.getElementById("nHadith");
@@ -267,6 +336,56 @@ function render() {
 }
 
 const GEAR = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>`;
+
+const DOWNLOAD = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M4 19h16"/></svg>`;
+
+/** The manual install steps, each with a small drawing of what the person sees. */
+function installHtml(x: (typeof TEXT)[Lang]): string {
+  const i = x.install;
+  const b = browser ?? "edge";
+  const store = browser && STORE[browser];
+  if (store)
+    return `<section class="panel install install--store">
+      <h2>${esc(i.title)}</h2>
+      <a class="btn btn--primary btn--big" href="${esc(store)}" target="_blank" rel="noopener">${DOWNLOAD}${esc(i.storeBtn(BROWSER_NAME[browser]))}</a>
+      <p class="muted">${esc(i.storeNote)}</p>
+    </section>`;
+  const page = `${b}://extensions`;
+  const extPage = (hi: "dev" | "load" | "") => `<div class="mock mock--ext" aria-hidden="true">
+      <div class="mock__bar"><span class="mock__url">${page}</span></div>
+      <div class="mock__body">
+        <span class="mock__dev ${hi === "dev" ? "hi" : ""}">${esc(i.mockDev)} <i class="sw on"></i></span>
+        <span class="mock__btn ${hi === "load" ? "hi" : ""}">${esc(i.mockLoad)}</span>
+      </div>
+    </div>`;
+  const art = [
+    `<div class="mock mock--file" aria-hidden="true">${DOWNLOAD}<span>yaqeen-extension.zip</span></div>`,
+    `<div class="mock mock--file" aria-hidden="true"><span class="folder"></span><span>yaqeen-extension</span></div>`,
+    `<div class="mock mock--ext" aria-hidden="true"><div class="mock__bar"><span class="mock__url hi">${page}</span></div></div>`,
+    extPage("dev"),
+    extPage("load"),
+    `<div class="mock mock--ext" aria-hidden="true"><div class="mock__body mock__body--col">${markSvg(28)}<span class="mock__btn hi">${esc(lang === "ar" ? "تنزيل البيانات الآن" : "Download data now")}</span></div></div>`,
+  ];
+  return `<section class="panel install">
+      <h2>${esc(i.title)}</h2>
+      ${browser ? "" : `<p class="note">${esc(i.other)}</p>`}
+      <p class="muted">${esc(i.soon)}</p>
+      <a class="btn btn--primary btn--big" href="yaqeen-extension.zip" download>${DOWNLOAD}${esc(i.download)}</a>
+      <p class="muted">${esc(i.size)}</p>
+    </section>
+    <ol class="steps">${i.steps
+      .map(
+        ([h, p], n) => `<li class="step panel">
+          <span class="step__n">${n + 1}</span>
+          <div class="step__text"><h3>${esc(h)}</h3><p>${esc(p)}</p>
+            ${n === 2 ? `<p class="copyline"><code dir="ltr">${page}</code><button class="btn btn--secondary btn--small" data-copy="${page}">${esc(i.copy)}</button></p>` : ""}
+          </div>
+          ${art[n]}
+        </li>`,
+      )
+      .join("")}</ol>
+    <p class="muted center">${esc(i.pin)}</p>`;
+}
 
 /** Reply, repost, like and share, drawn as thin grey outlines so they read as part of the picture. */
 const ICONS = [
@@ -326,6 +445,8 @@ function viewHtml(x: (typeof TEXT)[Lang]): string {
             <p class="muted foot">${esc(x.popupFoot)}</p>
           </div>
         </div>`;
+    case "install":
+      return installHtml(x);
     case "settings": {
       const toggle = (label: string, hint?: string) =>
         `<label class="toggle"><span>${esc(label)}${hint ? `<br><small class="muted">${esc(hint)}</small>` : ""}</span><input type="checkbox" checked></label>`;
