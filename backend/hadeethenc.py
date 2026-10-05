@@ -38,6 +38,7 @@ _TAILS = [r"(رواه .*|متفق عليه.*|اخرجه .*)$"]
 
 def strip_framing(text):
     t = re.sub("[إأآ]", "ا", text.replace("ﷺ", " صلى الله عليه وسلم "))
+    t = re.sub(r"\s+", " ", t).strip()
     for p in _LEAD_INS + _TAILS:
         t = re.sub(p, "", t)
     return t.strip(" :،.\"«»“”")

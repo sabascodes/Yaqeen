@@ -8,6 +8,9 @@ ITEMS = [
     {"id": "2", "text": "الدين النصيحة قلنا لمن قال لله ولكتابه ولرسوله ولأئمة المسلمين وعامتهم",
      "grade": "صحيح", "attribution": "رواه مسلم"},
 ]
+# نص السجل كما نشرته الموسوعة (اللفظ الأول ثم "وفي لفظ للبخاري")، من تجربة صبا في كولاب.
+NIYYAH = ("عن عمر بن الخطاب رضي الله عنه قال: قال رسول الله صلى الله عليه وسلم: «إِنَّمَا الْأَعْمَالُ بِالنِّيَّةِ، "
+          "وَإِنَّمَا لِامْرِئٍ مَا نَوَى».\nوفي لفظ للبخاري: «إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى».")
 INDEX = hadeethenc.HadithIndex(ITEMS)
 
 
@@ -50,3 +53,9 @@ def test_embeddings_follow_ids_not_file_order():
     emb = np.array([[0, 1], [0.95, 0.31], [0, 1]], dtype="float32")
     idx = hadeethenc.HadithIndex(ITEMS, emb, ["1", "2", "3"], embed=lambda t: np.array([1, 0], dtype="float32"))
     assert idx._semantic("x", k=1) == {1: np.float32(0.95).item()}
+
+
+def test_wording_from_a_second_narration_in_the_record_is_verbatim():
+    idx = hadeethenc.HadithIndex([{"id": "4560", "text": NIYYAH, "grade": "صحيح", "attribution": "متفق عليه"}])
+    r = hadeethenc.check_hadeethenc("قال رسول الله ﷺ: إنما الأعمال بالنيات وإنما لكل امرئ ما نوى", idx)
+    assert r["classification"] == "حديث ثابت"

@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import type { EncHadith } from "../src/core/types";
 import { normalizeArabic, skeleton } from "../src/core/normalize";
 import { QuranIndex } from "../src/core/quranIndex";
 import { HadithIndex } from "../src/core/hadithIndex";
@@ -317,5 +318,22 @@ describe("HadeethEnc download", () => {
     expect(r.items).toHaveLength(2);
     const ones = (fetchImpl as unknown as { mock: { calls: string[][] } }).mock.calls.filter(([u]) => u!.includes("/one/"));
     expect(ones.every(([u]) => !u!.includes(`id=${ENC[0]!.id}`))).toBe(true);
+  });
+});
+
+describe("HadeethEnc records with a second narration", () => {
+  // Record text as HadeethEnc publishes it (first wording, then "وفي لفظ للبخاري").
+  const niyyah: EncHadith = {
+    id: "4560",
+    text: "عن عمر بن الخطاب رضي الله عنه قال: قال رسول الله صلى الله عليه وسلم: «إِنَّمَا الْأَعْمَالُ بِالنِّيَّةِ، وَإِنَّمَا لِامْرِئٍ مَا نَوَى».\nوفي لفظ للبخاري: «إِنَّمَا الْأَعْمَالُ بِالنِّيَّاتِ، وَإِنَّمَا لِكُلِّ امْرِئٍ مَا نَوَى».",
+    grade: "صحيح",
+    attribution: "متفق عليه",
+  };
+  it("treats the second narration's exact wording as verbatim", async () => {
+    const r = await checkPost("قال رسول الله ﷺ: إنما الأعمال بالنيات وإنما لكل امرئ ما نوى", {
+      quran,
+      hadith: new HadithIndex([niyyah]),
+    });
+    expect(r.verdicts[0]).toMatchObject({ kind: "hadith_authentic", source: "hadeethenc" });
   });
 });
