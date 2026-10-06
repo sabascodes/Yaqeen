@@ -1,0 +1,61 @@
+/* Yaqeen design tokens and result card, from the Figma "Yaqeen / Colors" styles in web/styles.css. */
+:host, :root {
+  --brand:#0F5B4A; --brand-dark:#0A3F33; --accent:#B8903A; --tint:#E6F1EC;
+  --bg:#F7F5EF; --surface:#FFFFFF; --subtle:#EFEBE0;
+  --text:#1B1F1D; --muted:#5B655F; --on-brand:#FFFFFF; --border:#E2DDCF;
+  --quran-fg:#0B6B4B;    --quran-bg:#E1F3EA;
+  --hadith-fg:#1A5496;   --hadith-bg:#E3EDF9;
+  --wording-fg:#8A5200;  --wording-bg:#FBEBCF;
+  --weak-fg:#B3261E;     --weak-bg:#FBE4E1;
+  --differed-fg:#6B3FA0; --differed-bg:#EFE6F8;
+  --notfound-fg:#46515C; --notfound-bg:#E9EDF1;
+  --font-ar:'Cairo',system-ui,sans-serif;
+  --font-en:'Inter',system-ui,sans-serif;
+  --font-scripture:'Amiri','Traditional Arabic','Noto Naskh Arabic',serif;
+}
+* { box-sizing:border-box; margin:0 }
+.yq { font-family:var(--font-ar); color:var(--text); line-height:1.7; font-size:14px }
+.yq[lang="en"] { font-family:var(--font-en); line-height:1.6 }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:9px 18px; border-radius:10px;
+  font:600 13px/20px inherit; font-family:inherit; border:1px solid transparent; cursor:pointer; text-decoration:none }
+.btn:hover { filter:brightness(.95) }
+.btn--primary { background:var(--brand); color:var(--on-brand) }
+.btn--secondary { background:var(--surface); color:var(--brand); border-color:var(--border) }
+.btn--small { padding:4px 10px; font-size:12px }
+.badge { display:inline-flex; align-items:center; gap:8px; padding:5px 12px; border-radius:999px; font-size:13px;
+  font-weight:600; line-height:20px; border:0; cursor:pointer; font-family:inherit }
+.badge .dot { width:8px; height:8px; border-radius:50%; background:currentColor }
+[data-type="quran"] .badge, .badge[data-type="quran"] { background:var(--quran-bg); color:var(--quran-fg) }
+[data-type="hadith"] .badge, .badge[data-type="hadith"] { background:var(--hadith-bg); color:var(--hadith-fg) }
+[data-type="wording"] .badge, .badge[data-type="wording"] { background:var(--wording-bg); color:var(--wording-fg) }
+[data-type="weak"] .badge, .badge[data-type="weak"] { background:var(--weak-bg); color:var(--weak-fg) }
+[data-type="differed"] .badge, .badge[data-type="differed"] { background:var(--differed-bg); color:var(--differed-fg) }
+[data-type="notfound"] .badge, .badge[data-type="notfound"] { background:var(--notfound-bg); color:var(--notfound-fg) }
+.card { width:100%; max-width:380px; background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:16px;
+  display:flex; flex-direction:column; gap:14px; box-shadow:0 4px 16px rgba(26,30,26,.08); text-align:start;
+  border-top:5px solid var(--c, var(--brand)) }
+.card__head { display:flex; justify-content:space-between; align-items:center; gap:8px }
+.field { display:flex; flex-direction:column; gap:6px }
+.field__label { font-size:12px; color:var(--muted) }
+.field__value { font-size:14px; line-height:24px }
+.scripture { direction:rtl; text-align:right; font-family:var(--font-scripture); font-size:20px; line-height:38px;
+  background:var(--subtle); border-radius:10px; padding:10px 14px; border-inline-start:4px solid var(--c) }
+.scripture--correct { background:var(--wording-bg); border:0 }
+.translation { font-family:var(--font-en); direction:ltr; text-align:left; font-size:13px; color:var(--muted) }
+.card[data-type="quran"] { --c:var(--quran-fg) } .card[data-type="hadith"] { --c:var(--hadith-fg) }
+.card[data-type="wording"] { --c:var(--wording-fg) } .card[data-type="weak"] { --c:var(--weak-fg) }
+.card[data-type="differed"] { --c:var(--differed-fg) } .card[data-type="notfound"] { --c:var(--notfound-fg) }
+.rulings { list-style:none; padding:0; display:flex; flex-direction:column; gap:8px }
+.rulings li { background:var(--bg); border-radius:10px; padding:8px 12px; font-size:13px }
+.rulings b { color:var(--c) }
+.card__actions { display:flex; gap:8px; flex-wrap:wrap }
+.card__actions .btn { flex:1 }
+.card__foot { font-size:12px; color:var(--muted) }
+.note { font-size:13px; color:var(--wording-fg) }
+/* In-page widget */
+.yq-host { display:flex; flex-direction:column; align-items:flex-start; gap:8px; margin-block:6px; direction:inherit }
+.yq-row { display:flex; gap:6px; flex-wrap:wrap }
+.yq-chip { display:inline-flex; align-items:center; gap:6px; padding:3px 10px; border-radius:999px; border:1px solid var(--border);
+  background:var(--surface); color:var(--brand); font:600 12px/20px var(--font-ar); cursor:pointer }
+.yq-logo { width:16px; height:16px }
+.yq-mark { flex:none; display:block }
